@@ -3,6 +3,8 @@ from rich.table import Table
 from rich.panel import Panel
 from rich.columns import Columns
 from rich.console import Console
+from rich.box import Box
+from rich.box import ROUNDED 
 import os
 import time
 import bcrypt
@@ -31,7 +33,7 @@ class Player:
         self.password_hash = password_hash
         self.attack = character_type.attack
         self.health = character_type.health
-        self.max_health = character_type.health  # Fix: Use character_type.health directly
+        self.max_health = character_type.health
         self.defense = character_type.defense
         self.xp = 0
         self.level = 1
@@ -92,12 +94,34 @@ class Player:
             return "Légende"
 
     def level_up(self):
+        previous_level = self.level
         self.level += 1
+        
+        base_multiplier = self.level ** 1.5 
+        
+        attack_gain = int(5 + base_multiplier * 1.2)
+        defense_gain = int(3 + base_multiplier * 0.8)
+        health_gain = int(20 + base_multiplier * 2.5)
+        
+        # Application des gains
+        self.attack += attack_gain
+        self.defense += defense_gain
+        self.max_health += health_gain
+        self.health = self.max_health
+
         rank = self.get_rank()
-        print(f"[bold green]Niveau supérieur ![/bold green] Vous êtes maintenant [bold]{rank}[/bold] (niveau {self.level})")
+        print(Panel.fit(
+            f"[bold cyan]NIVEAU {previous_level} → {self.level}[/bold cyan]\n"
+            f"[green]↑ Attaque: +{attack_gain} ({self.attack - attack_gain} → {self.attack})[/green]\n"
+            f"[blue]↑ Défense: +{defense_gain} ({self.defense - defense_gain} → {self.defense})[/blue]\n"
+            f"[red]❤ Santé max: +{health_gain} ({self.max_health - health_gain} → {self.max_health})[/red]",
+            title=f"[gold1]NIVEAU SUPÉRIEUR ![/gold1] [italic]({rank})[/italic]",
+            border_style="green",
+            padding=(1, 2)
+        ))
+        
         self.save_to_file()
 
-    # Modifiez la méthode show_healthbar pour inclure le rang
     def show_healthbar(self):
         filled_hearts = self.health // 10
         empty_hearts = (self.max_health - self.health) // 10
@@ -121,7 +145,7 @@ class Player:
         print(xp_bar)
 
     def calculate_level(self):
-        return self.level * 100
+        return int(100 * (1.5 ** (self.level - 1)))
     
     def gain_xp(self, amount):
         prev_level = self.level
@@ -324,6 +348,40 @@ def create_player():
                 time.sleep(3)
                 break
 
+def show_game_map():
+    """Affiche la carte du monde du jeu en ASCII"""
+    console = Console()
+    console.clear()
+    
+    ascii_map = r"""
+  _________________________________________________________
+ /                                                         \
+|  [bold]1. Grotte de Cristal[/bold]                    [bold]4. Montagnes Mystiques[/bold]  |
+|   ___   ___   ___                      /\  /\  /\        |
+|  /   \ /   \ /   \                   /  \/  \/  \       |
+| |     Cavernes     |                /             \      |
+|  \___/ \___/ \___/                  \/\        /\/      |
+|      |                  ______________  \      /         |
+|      |                 /              \ \    /           |
+| [bold]2. Jardins Étincelants[/bold]  | [bold]5. Marais des Secrets[/bold] | |
+|   o  o  o  o  o      |  ~~  ~~  ~~  ~~ |    | ~~  ~~    |
+|  < Fleurs Magiques >  |  Marécages     |    |           |
+|   o  o  o  o  o       \_______________/     |  Serpents |
+|      |                          |            \_/  \_/    |
+|      |                         / \                       |
+| [bold]3. Forêt des Fées[/bold]       /   \                      |
+|   /\  /\  /\              ____/     \____                |
+|  /  \/  \/  \           /               \               |
+| |  Arbres     |         |  [bold]Campement[/bold]   |              |
+|  \  Ancestraux/          \_______________/               |
+ \_________________________________________________________/
+    """
+    
+    print(Panel.fit(f"[cyan]{ascii_map}[/cyan]", 
+          title="[bold gold1]Carte du Royaume d'Eldoria[/bold gold1]", 
+          border_style="green",
+          padding=(1, 2)))
+    input("\nAppuyez sur Entrée pour retourner au menu...")
 # Fonction de connexion
 def login():
     while True:
@@ -515,9 +573,9 @@ if __name__ == "__main__":
         
         print(Columns([
             Panel("[bold cyan]1. Créer un joueur\n2. Connexion\n3. Quitter[/bold cyan]", 
-                   title="Menu Principal", border_style="yellow"),
-            Panel("[bold green]4. Rechercher un joueur\n5. Classement[/bold green]", 
-                   title="Autres Options", border_style="blue")
+                title="Menu Principal", border_style="yellow"),
+            Panel("[bold green]4. Rechercher un joueur\n5. Classement[/bold green]\n[bold magenta]6. Afficher la carte[/bold magenta]", 
+                title="Autres Options", border_style="blue")
         ]))
         
         choice = input("\nSélectionnez une option : ")
@@ -530,7 +588,7 @@ if __name__ == "__main__":
                 explore_region(player)
         elif choice == "3":
             console.clear()
-            print("\n[bold yellow]Au revoir ![/bold yellow]")
+            print("\n[bold yellow]Au revoir, merci d'avoir joué ![/bold yellow]")
             break
         elif choice == "4":
             search_player_stats()
@@ -538,6 +596,8 @@ if __name__ == "__main__":
         elif choice == "5":
             show_leaderboard()
             input("\nAppuyez sur Entrée pour continuer...")
+        elif choice == "6":
+            show_game_map()
         else:
             print("[bold red]Option invalide![/bold red]")
             time.sleep(1)
