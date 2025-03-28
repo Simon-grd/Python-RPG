@@ -235,45 +235,52 @@ class Player:
         self.save_to_file()
             
     def save_to_file(self):
+        # Lecture de toutes les lignes
         with open("players.txt", "r") as f:
             lines = f.readlines()
 
-        # Trouve et met à jour la ligne du joueur
-        updated = False
+        # Création des nouvelles lignes
         new_lines = []
+        player_found = False
+        
         for line in lines:
             if line.startswith(self.ign + " "):
                 new_line = f"{self.ign} {self.password_hash.decode()} {self.character_type.name} " \
                         f"{self.attack} {self.max_health} {self.defense} " \
                         f"{self.level} {self.xp} {','.join(self.completed_regions)}\n"
                 new_lines.append(new_line)
-                updated = True
+                player_found = True
             else:
                 new_lines.append(line)
-        
-        # Si le joueur n'était pas dans le fichier (cas d'un changement de nom)
-        if not updated:
+
+        # Si le joueur n'était pas dans le fichier (normalement impossible)
+        if not player_found:
             new_lines.append(f"{self.ign} {self.password_hash.decode()} {self.character_type.name} " \
                             f"{self.attack} {self.max_health} {self.defense} " \
                             f"{self.level} {self.xp} {','.join(self.completed_regions)}\n")
 
-        # Réécrit le fichier complet
+        # Réécriture complète du fichier
         with open("players.txt", "w") as f:
             f.writelines(new_lines)
 
     def set_username(self, new_username):
         old_username = self.ign
         self.ign = new_username
-        self.save_to_file()  # Sauvegarde immédiate
-        # Met à jour tous les fichiers de sauvegarde
-        with open("players.txt", "r") as f:
-            lines = f.readlines()
         
-        with open("players.txt", "w") as f:
+        # Mise à jour directe du fichier sans utiliser save_to_file()
+        with open("players.txt", "r+") as f:
+            lines = f.readlines()
+            f.seek(0)
+            f.truncate()
+            
             for line in lines:
                 if line.startswith(old_username + " "):
-                    line = line.replace(old_username, new_username, 1)
-                f.write(line)
+                    new_line = f"{self.ign} {self.password_hash.decode()} {self.character_type.name} " \
+                            f"{self.attack} {self.max_health} {self.defense} " \
+                            f"{self.level} {self.xp} {','.join(self.completed_regions)}\n"
+                    f.write(new_line)
+                else:
+                    f.write(line)
         
         print("[green]Nom d'utilisateur modifié avec succès ![/green]")
 
