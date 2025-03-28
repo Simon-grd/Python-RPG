@@ -1,9 +1,6 @@
 import os
-<<<<<<< HEAD
 from rich import print
-=======
 import time
->>>>>>> e6a91a9d38ab596d8b2034473c9604e7248330a6
 
 ascii_art = r"""
    ___                   ____      __        __         _     _ 
