@@ -10,3 +10,20 @@ class UI:
     @staticmethod
     def show_experience(character, exp):
         print(f"[blue]{character.name} gains {exp} experience![/blue]")
+
+    @staticmethod
+    def show_status(character):
+        print(f"[purple]{character.name} [level {character.level}, {character.hp}/{character.max_hp} HP] [/purple]")
+    
+    @staticmethod
+    def show_inventory(character): 
+        print(f"[yellow]{character.name}'s inventory: {', '.join(character.inventory)}[/yellow]")
+    
+    @staticmethod
+    def show_menu(character):
+        print(f"[cyan]Choose an action for {character.name}:[/cyan]")
+        print("1. Attack")
+        print("2. Use Item")
+        print("3. View Status")
+        print("4. View Inventory")
+        print("5. Quit")

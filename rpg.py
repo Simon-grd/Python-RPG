@@ -1,5 +1,6 @@
 import os
 
+
 ascii_art = r"""
    ___                   ____      __        __         _     _ 
   / _ \ _ __   ___ _ __ |  _ \ _   \ \      / /__  _ __| | __| |
@@ -144,7 +145,7 @@ def crystal_cave_exploration(player):
         print("1. Lancer un sort\n2. Tirer une flèche")
         fight = input("Nous devons vaincre la chauve-souris pour sortir d'ici vivant. Choisissez votre attaque : ")
         if fight == "1":
-            print("Le sort est réussi. +50 Attaque")
+            print("[green]Le sort est réussi. +50 Attaque[/green]")
             player.attack += 50
             player.gain_xp(50)
         elif fight == "2":
