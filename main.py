@@ -5,7 +5,13 @@ from rich.columns import Columns
 from rich.console import Console
 from rich.box import Box
 from rich.box import ROUNDED 
+from rich.live import Live
+from rich.progress import Progress, BarColumn
+from rich.spinner import Spinner
+from rich.text import Text
+import itertools
 import os
+import random
 import time
 import bcrypt
 
@@ -17,6 +23,69 @@ ascii_art = r"""
   \___/| .__/ \___|_| |_|_|    \__, | \_/\_/ \___/|_|  |_|\__,_|
        |_|                     |___/                            
 """
+
+def attack_animation():
+    frames = ["⚔️", "🔥", "💥", "✨"]
+    with Live(refresh_per_second=10) as live:
+        for frame in frames:
+            live.update(Text(frame, style="bold red"))
+            time.sleep(0.3)
+
+
+def show_animated_ascii():
+    console = Console()
+    colors = ["#FF69B4", "#4B0082", "#0000FF", "#00FF00", "#FFFF00", "#FF7F00", "#FF0000"]
+    
+    for color in colors:
+        console.clear()
+        console.print(ascii_art, style=color)
+        time.sleep(0.1)
+
+def animate_xp_gain(start, end, required):
+    progress = Progress(
+        "[progress.description]{task.description}",
+        BarColumn(bar_width=None),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+    )
+    
+    with Live(progress, refresh_per_second=20):
+        task = progress.add_task("XP", total=required)
+        for xp in range(start, end + 1):
+            progress.update(task, advance=1, description=f"{xp}/{required} XP")
+            time.sleep(0.02)
+
+def animate_health_change(current, target, max_health, duration=0.5):
+    console = Console()
+    steps = abs(target - current)
+    step_delay = duration / steps if steps != 0 else 0
+    
+    for health in range(current, target, 1 if target > current else -1):
+        filled = health // 10
+        empty = (max_health - health) // 10
+        console.print(f"[{'❤️' * filled}{'♡' * empty}] {health}/{max_health} PV")
+        time.sleep(step_delay)
+        console.move_up()
+
+def scroll_text(text, style="white", delay=0.03):
+    console = Console()
+    for char in str(text):
+        console.print(char, style=style, end="", highlight=False)
+        time.sleep(delay)
+    print()
+
+def screen_transition(style="cyan", length=30):
+    console = Console()
+    for i in range(length):
+        console.print("▉" * i, style=style, end="\r")
+        time.sleep(0.03)
+    console.clear()
+
+def custom_spinner(text):
+    spinner_frames = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
+    with Live() as live:
+        for frame in itertools.cycle(spinner_frames):
+            live.update(Text(f"{frame} {text}"))
+            time.sleep(0.1)
 
 class Item:
     def __init__(self, name, description, effect_type, value):
@@ -39,6 +108,7 @@ class Player:
         self.level = 1
         self.inventory = []
         self.active_effects = {}
+        self.completed_regions = []
 
     def add_item(self, item):
         self.inventory.append(item)
@@ -46,19 +116,20 @@ class Player:
         
     def show_inventory(self):
         if not self.inventory:
-            print("[bold red]Votre inventaire est vide ![/bold red]")
+            print("[blink bold red]Votre inventaire est vide ![/blink bold red]")
             return
 
         panels = []
         for idx, item in enumerate(self.inventory, 1):
             panel = Panel.fit(
-                f"{item.description}\n[bold]Effet : [/bold]+{item.value} {item.effect_type}",
-                title=f"[yellow]{item.name}[/yellow]",
-                subtitle=f"[cyan]Item {idx}[/cyan]"
+                f"[bold]{item.description}[/bold]\n[blink]Effet : +{item.value} {item.effect_type}[/blink]",
+                title=f"[reverse]{item.name}[/reverse]",
+                border_style=random.choice(["green", "yellow", "cyan", "magenta"]),
+                box=ROUNDED
             )
             panels.append(panel)
         
-        print(Columns(panels))
+        print(Columns(panels, expand=True))
         
     def use_item(self, item_index):
         try:
@@ -122,11 +193,13 @@ class Player:
         
         self.save_to_file()
 
-    def show_healthbar(self):
+    def show_healthbar(self, previous_health=None):
+        if previous_health is not None:
+            animate_health_change(previous_health, self.health, self.max_health)
+        
         filled_hearts = self.health // 10
         empty_hearts = (self.max_health - self.health) // 10
-        rank = self.get_rank()
-        print(f"\n[bold]Niveau {self.level} - {rank}[/bold]")
+        print(f"\n[bold]Niveau {self.level} - {self.get_rank()}[/bold]")
         print(f"[{'❤️' * filled_hearts}{'♡' * empty_hearts}] {self.health}/{self.max_health} PV")
 
     def show_xp_bar(self):
@@ -149,11 +222,16 @@ class Player:
     
     def gain_xp(self, amount):
         prev_level = self.level
+        prev_xp = self.xp
         self.xp += amount
+        
+        if prev_level == self.level:
+            required = self.calculate_level()
+            animate_xp_gain(prev_xp, self.xp, required)
+        
         while self.xp >= self.calculate_level():
             self.level_up()
-        if prev_level == self.level:
-            self.show_xp_bar()
+        
         self.save_to_file()
             
     def save_to_file(self):
@@ -163,8 +241,9 @@ class Player:
         with open("players.txt", "w") as file:
             for line in lines:
                 if self.ign in line:
-                    # Modification de la ligne pour utiliser password_hash
-                    line = f"{self.ign} {self.password_hash.decode()} {self.character_type.name} {self.attack} {self.health} {self.defense} {self.level} {self.xp}\n"
+                    line = f"{self.ign} {self.password_hash.decode()} {self.character_type.name} " \
+                        f"{self.attack} {self.max_health} {self.defense} " \
+                        f"{self.level} {self.xp} {','.join(self.completed_regions)}\n"
                 file.write(line)
 
 # Définit la classe TypePersonnage
@@ -343,13 +422,14 @@ def create_player():
                     f.write("NomUtilisateur HashMotDePasse TypePersonnage Attaque Santé Défense Niveau XP\n")
 
             with open("players.txt", "a", encoding="utf-8") as f:
-                f.write(f"{player.ign} {player.password_hash.decode()} {player.character_type.name} {player.character_type.attack} {player.character_type.health} {player.character_type.defense} {player.level} {player.xp}\n")
-                print("Utilisateur créé avec succès !")
-                time.sleep(3)
-                break
+                    f.write(f"{player.ign} {player.password_hash.decode()} {player.character_type.name} "
+                    f"{player.character_type.attack} {player.character_type.health} "
+                    f"{player.character_type.defense} {player.level} {player.xp} \n")
+                    print("Utilisateur créé avec succès !")
+                    time.sleep(3)
+                    break
 
 def show_game_map():
-    """Affiche la carte du monde du jeu en ASCII"""
     console = Console()
     console.clear()
     
@@ -399,16 +479,24 @@ def login():
         except UnicodeDecodeError:
             with open("players.txt", "r", encoding="latin-1") as file:
                 lines = file.readlines()
-
         for line in lines:
-            fields = line.split()
-            if len(fields) >= 8 and username == fields[0]:
-                # Vérification du mot de passe avec bcrypt
-                if bcrypt.checkpw(password.encode('utf-8'), fields[1].encode('utf-8')):
-                    player_found = True
-                    character_type = CharacterType(fields[2], int(fields[3]), int(fields[4]), int(fields[5]))
-                    user = Player(fields[0], character_type, fields[1].encode('utf-8'))
-                    break
+                    if line.startswith(username + " "):
+                        fields = line.strip().split()
+                        if len(fields) >= 8 and username == fields[0]:
+                            if bcrypt.checkpw(password.encode('utf-8'), fields[1].encode('utf-8')):
+                                player_found = True
+                                character_type = CharacterType(fields[2], int(fields[3]), int(fields[4]), int(fields[5]))
+                                user = Player(fields[0], character_type, fields[1].encode('utf-8'))
+                                # Chargement des données sauvegardées
+                                user.level = int(fields[6])
+                                user.xp = int(fields[7])
+                                user.attack = int(fields[3])
+                                user.defense = int(fields[5])
+                                user.max_health = int(fields[4])  # Correction du max_health
+                                user.health = int(fields[4])
+                                if len(fields) >= 9:
+                                    user.completed_regions = fields[8].split(',')
+                                break
 
         if not player_found:
             print("Nom d'utilisateur ou mot de passe incorrect. Veuillez réessayer.")
@@ -419,7 +507,7 @@ def login():
             return user
 
 def crystal_cave_exploration(player):
-    print("Vous entendez un bruit inquiétant provenant du tunnel gauche de la grotte, mais une faible lueur scintille.")
+    scroll_text("Vous entendez un bruit inquiétant...", style="#FFA500")
     print("Le tunnel de droite est plongé dans une obscurité totale et silencieux.")
     print("1. Gauche\n2. Droite\n")
     path = input("Quel chemin souhaitez-vous emprunter ? ")
@@ -436,7 +524,8 @@ def crystal_cave_exploration(player):
         print("1. Lancer un sort\n2. Tirer une flèche")
         fight = input("Nous devons vaincre la chauve-souris pour sortir d'ici vivant. Choisissez votre attaque : ")
         if fight == "1":
-            print("[green]Le sort est réussi. +50 Attaque[/green]")
+            attack_animation()
+            scroll_text("[green]Le sort est réussi. +50 Attaque[green]")
             player.attack += 50
             player.gain_xp(50)
         elif fight == "2":
@@ -490,6 +579,7 @@ regions = {
 }
 
 def explore_region(player):
+    screen_transition(style="purple")
     while True:
         print("\n[bold cyan]Menu Principal d'Exploration[/bold cyan]")
         print(Columns([
@@ -516,15 +606,35 @@ def explore_region(player):
                 if zone_choice == "0":
                     break
                 elif zone_choice == "1":
+                    if '1' in player.completed_regions:
+                        print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
+                        continue
                     crystal_cave_exploration(player)
+                    player.completed_regions.append('1')
                 elif zone_choice == "2":
+                    if '2' in player.completed_regions:
+                        print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
+                        continue
                     glittering_gardens_exploration(player)
+                    player.completed_regions.append('2')
                 elif zone_choice == "3":
+                    if '3' in player.completed_regions(player):
+                        print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
+                        continue
                     fairy_forest_exploration(player)
+                    player.completed_regions.append('3')
                 elif zone_choice == "4":
+                    if '4' in player.completed_regions(player):
+                        print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
+                        continue
                     mystical_mountains_exploration(player)
+                    player.completed_regions.append('4')
                 elif zone_choice == "5":
+                    if '5' in player.completed_regions(player):
+                        print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
+                        continue
                     swamp_of_secrets_exploration(player)
+                    player.completed_regions.append('5')
                 else:
                     print("[bold red]Choix invalide ![/bold red]")
                 
@@ -556,7 +666,9 @@ def explore_region(player):
 if __name__ == "__main__":
     console = Console()
     first_time = True
-    
+    with console.status("[bold green]Chargement du jeu...[/bold green]", spinner="dots12"):
+        time.sleep(2)
+    show_animated_ascii()
     while True:
         if first_time:
             # Fade-in animation with clearing
