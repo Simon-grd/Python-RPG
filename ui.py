@@ -3,15 +3,15 @@ from rich import print
 class UI:
     @staticmethod
     def show_damage(character, damage):
-        print(f"[red]{character.name} takes {damage} damage![/red]")
+        print(f"[red]{character.name} takes {damage} damage!")
 
     @staticmethod
     def show_heal(character, heal):
-        print(f"[green]{character.name} heals {heal} HP![/green]")
+        print(f"[bold green]{character.name} heals {heal} HP!")
 
     @staticmethod
     def show_experience(character, exp):
-        print(f"[blue]{character.name} gains {exp} experience![/blue]")
+        print(f"[blue]{character.name} gains {exp} experience!")
 
     @staticmethod
     def show_status(character):
