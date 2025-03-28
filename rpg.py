@@ -1,5 +1,5 @@
 import os
-
+import time
 
 ascii_art = r"""
    ___                   ____      __        __         _     _ 
@@ -99,12 +99,13 @@ def create_player():
                 break
             
             if not os.path.exists("players.txt"):
-                with open("players.txt", "w") as f:
+                with open("players.txt", "w", encoding="utf-8") as f:
                     f.write("NomUtilisateur MotDePasse TypePersonnage Attaque Santé Défense Niveau XP\n")
 
-            with open("players.txt", "a") as f:
+            with open("players.txt", "a", encoding="utf-8") as f:
                 f.write(f"{player.ign} {player.password} {player.character_type.name} {player.character_type.attack} {player.character_type.health} {player.character_type.defense} {player.level} {player.xp}\n")
                 print("Utilisateur créé avec succès !")
+                time.sleep(3)
                 break
 
 # Fonction de connexion
@@ -115,7 +116,7 @@ def login():
         player_found = False
         user = None
 
-        with open("players.txt", "r") as file:
+        with open("players.txt", "r", encoding="utf-8") as file:
             for line in file:
                 fields = line.split()
                 if len(fields) == 8:
