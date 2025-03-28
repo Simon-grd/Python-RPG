@@ -1,2 +1,2 @@
-Username Password CharacterType Attack Health Defense Level XP
-Papaiou jempalenwar Wizard 325 850 225 1 50
+NomUtilisateur MotDePasse TypePersonnage Attaque Santé Défense Niveau XP
+Xx_SimonBedard_xX ouististi Elfe 200 950 150 1 50

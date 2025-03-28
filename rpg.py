@@ -9,162 +9,227 @@ ascii_art = r"""
        |_|                     |___/                            
 """
 
-# Définition de la classe Joueur
-class Joueur:
-    def __init__(self, pseudo, type_personnage, mot_de_passe):
-        self.pseudo = pseudo
-        self.type_personnage = type_personnage
-        self.mot_de_passe = mot_de_passe
-        self.attaque = type_personnage.attaque
-        self.sante = type_personnage.sante
-        self.defense = type_personnage.defense
+# Définit la classe Joueur
+class Player:
+    def __init__(self, ign, character_type, password):
+        self.ign = ign
+        self.character_type = character_type
+        self.password = password
+        self.attack = character_type.attack
+        self.health = character_type.health
+        self.defense = character_type.defense
         self.xp = 0
-        self.niveau = 1
+        self.level = 1
 
-    def mettre_a_jour_statistiques(self, nouvelle_attaque, nouvelle_sante, nouvelle_defense):
-        self.attaque = nouvelle_attaque
-        self.sante = nouvelle_sante
-        self.defense = nouvelle_defense
+    def update_player_stats(self, new_attack, new_health, new_defense):
+        self.attack = new_attack
+        self.health = new_health
+        self.defense = new_defense
 
-    def monter_de_niveau(self):
-        self.niveau += 1
-        print("Niveau supérieur ! Vous êtes maintenant niveau " + str(self.niveau))
-        self.sauvegarder_dans_fichier()
+    def level_up(self):
+        self.level += 1
+        print("Niveau supérieur ! Vous êtes maintenant au niveau " + str(self.level))
+        self.save_to_file() 
 
-    def calculer_niveau(self):
-        return self.niveau * 100
+    def calculate_level(self):
+        return self.level * 100
     
-    def gagner_xp(self, quantite):
-        self.xp += quantite
-        while self.xp >= self.calculer_niveau():
-            self.monter_de_niveau()
-        self.sauvegarder_dans_fichier()
+    def gain_xp(self, amount):
+        self.xp += amount
+        while self.xp >= self.calculate_level():
+            self.level_up()
+        self.save_to_file()
+            
+    def save_to_file(self):
+        with open("players.txt", "r") as file:
+            lines = file.readlines()
 
-    def sauvegarder_dans_fichier(self):
-        with open("joueurs.txt", "r") as fichier:
-            lignes = fichier.readlines()
+        with open("players.txt", "w") as file:
+            for line in lines:
+                if self.ign in line:
+                    line = f"{self.ign} {self.password} {self.character_type.name} {self.attack} {self.health} {self.defense} {self.level} {self.xp}\n"
+                file.write(line)
 
-        with open("joueurs.txt", "w") as fichier:
-            for ligne in lignes:
-                if self.pseudo in ligne:
-                    ligne = f"{self.pseudo} {self.mot_de_passe} {self.type_personnage.nom} {self.attaque} {self.sante} {self.defense} {self.niveau} {self.xp}\n"
-                fichier.write(ligne)
-
-# Définition de la classe TypePersonnage
-class TypePersonnage:
-    def __init__(self, nom, attaque, sante, defense):
-        self.nom = nom
-        self.attaque = attaque
-        self.sante = sante
+# Définit la classe TypePersonnage
+class CharacterType:
+    def __init__(self, name, attack, health, defense):
+        self.name = name
+        self.attack = attack
+        self.health = health
         self.defense = defense
 
-# Définition des types de personnages
-fee = TypePersonnage("Fée", 100, 1150, 100)
-magicien = TypePersonnage("Magicien", 275, 900, 175)
-elfe = TypePersonnage("Elfe", 200, 1000, 150)
-gobelin = TypePersonnage("Gobelin", 125, 1000, 225)
-valkyrie = TypePersonnage("Valkyrie", 250, 850, 250)
+# Définit les différents types de personnages
+fairy = CharacterType("Fée", 100, 1150, 100)
+wizard = CharacterType("Magicien", 275, 900, 175)
+elf = CharacterType("Elfe", 200, 1000, 150)
+goblin = CharacterType("Gobelin", 125, 1000, 225)
+valkyrie = CharacterType("Valkyrie", 250, 850, 250)
 
-# Fonction de création de joueur
-def creer_joueur():
+# Définit la fonction de création de joueur
+def create_player():
     while True:
-        pseudo = input("Entrez votre pseudo : ")
-        mot_de_passe = input("Entrez votre mot de passe : ")
+        player_name = input("Entrez votre nom d'utilisateur en jeu : ")
+        password = input("Entrez votre mot de passe : ")
 
-        utilisateur_existe = False
-        if os.path.exists("joueurs.txt"):
-            with open("joueurs.txt", "r") as fichier:
-                for ligne in fichier:
-                    if pseudo in ligne:
-                        print("Ce pseudo est déjà pris. Veuillez en choisir un autre.")
-                        utilisateur_existe = True
+        user_exists = False
+        if os.path.exists("players.txt"):
+            with open("players.txt", "r") as file:
+                for line in file:
+                    if player_name in line:
+                        print("Ce nom d'utilisateur est déjà pris. Veuillez en choisir un autre.")
+                        user_exists = True
                         break
 
-        if not utilisateur_existe:
+        if not user_exists:
             while True:
-                print("Choisissez votre type de personnage :")
+                print("Choisissez votre type de personnage : ")
                 print("1. Fée\n2. Magicien\n3. Elfe\n4. Gobelin\n5. Valkyrie")
-                choix = input()
-                if choix == "1":
-                    joueur = Joueur(pseudo, fee, mot_de_passe)
-                elif choix == "2":
-                    joueur = Joueur(pseudo, magicien, mot_de_passe)
-                elif choix == "3":
-                    joueur = Joueur(pseudo, elfe, mot_de_passe)
-                elif choix == "4":
-                    joueur = Joueur(pseudo, gobelin, mot_de_passe)
-                elif choix == "5":
-                    joueur = Joueur(pseudo, valkyrie, mot_de_passe)
+                character_type_choice = input()
+                if character_type_choice == "1":
+                    player = Player(player_name, fairy, password)
+                elif character_type_choice == "2":
+                    player = Player(player_name, wizard, password)
+                elif character_type_choice == "3":
+                    player = Player(player_name, elf, password)
+                elif character_type_choice == "4":
+                    player = Player(player_name, goblin, password)
+                elif character_type_choice == "5":
+                    player = Player(player_name, valkyrie, password)
                 break
             
-            if not os.path.exists("joueurs.txt"):
-                with open("joueurs.txt", "w") as f:
-                    f.write("Pseudo MotDePasse TypePersonnage Attaque Santé Défense Niveau XP\n")
+            if not os.path.exists("players.txt"):
+                with open("players.txt", "w") as f:
+                    f.write("NomUtilisateur MotDePasse TypePersonnage Attaque Santé Défense Niveau XP\n")
 
-            with open("joueurs.txt", "a") as f:
-                f.write(f"{joueur.pseudo} {joueur.mot_de_passe} {joueur.type_personnage.nom} {joueur.attaque} {joueur.sante} {joueur.defense} {joueur.niveau} {joueur.xp}\n")
-                print("Joueur créé avec succès !")
+            with open("players.txt", "a") as f:
+                f.write(f"{player.ign} {player.password} {player.character_type.name} {player.character_type.attack} {player.character_type.health} {player.character_type.defense} {player.level} {player.xp}\n")
+                print("Utilisateur créé avec succès !")
                 break
 
-# Connexion
-def connexion():
+# Fonction de connexion
+def login():
     while True:
-        pseudo = input("Entrez votre pseudo : ")
-        mot_de_passe = input("Entrez votre mot de passe : ")
-        joueur_trouve = False
-        utilisateur = None
+        username = input("Entrez votre nom d'utilisateur : ")
+        password = input("Entrez votre mot de passe : ")
+        player_found = False
+        user = None
 
-        with open("joueurs.txt", "r") as fichier:
-            for ligne in fichier:
-                champs = ligne.split()
-                if len(champs) == 8:
-                    pseudo_enregistre, mdp_enregistre = champs[0], champs[1]
-                    if pseudo == pseudo_enregistre and mot_de_passe == mdp_enregistre:
-                        joueur_trouve = True
-                        type_perso = TypePersonnage(champs[2], int(champs[3]), int(champs[4]), int(champs[5]))
-                        utilisateur = Joueur(pseudo_enregistre, type_perso, mdp_enregistre)
+        with open("players.txt", "r") as file:
+            for line in file:
+                fields = line.split()
+                if len(fields) == 8:
+                    stored_username, stored_password = fields[0], fields[1]
+                    if username == stored_username and password == stored_password:
+                        player_found = True
+                        character_type = CharacterType(fields[2], int(fields[3]), int(fields[4]), int(fields[5]))
+                        user = Player(stored_username, character_type, stored_password)
 
-        if not joueur_trouve:
-            print("Pseudo ou mot de passe incorrect. Veuillez réessayer.")
+        if not player_found:
+            print("Nom d'utilisateur ou mot de passe incorrect. Veuillez réessayer.")
         else:
-            return utilisateur
+            return user
 
-# Fonction d'exploration
-def explorer_region(joueur):
-    regions = {
-        "0": "Retour au menu principal",
-        "1": "Caverne Cristalline",
-        "2": "Jardins Scintillants",
-        "3": "Forêt des Fées",
-        "4": "Montagnes Mystiques",
-        "5": "Marais des Secrets"
-    }
+def crystal_cave_exploration(player):
+    print("Vous entendez un bruit inquiétant provenant du tunnel gauche de la grotte, mais une faible lueur scintille.")
+    print("Le tunnel de droite est plongé dans une obscurité totale et silencieux.")
+    print("1. Gauche\n2. Droite\n")
+    path = input("Quel chemin souhaitez-vous emprunter ? ")
+    if path == "1":
+        print("Quel soulagement ! Le bruit n'était que des gouttes d'eau tombant du plafond... Mais quelle est cette lumière ?")
+        print("Vous avez trouvé un cristal de santé chanceux ! +50 Santé")
+        player.health += 50
+        player.gain_xp(50)
+    elif path == "2":
+        print("Une chauve-souris maléfique attendait silencieusement dans l'obscurité. Préparez-vous à combattre !")
+        print("1. Lancer un sort\n2. Tirer une flèche")
+        fight = input("Nous devons vaincre la chauve-souris pour sortir d'ici vivant. Choisissez votre attaque : ")
+        if fight == "1":
+            print("Le sort est réussi. +50 Attaque")
+            player.attack += 50
+            player.gain_xp(50)
+        elif fight == "2":
+            print("La flèche manque sa cible, et la chauve-souris montre ses crocs avant de s'envoler. -50 Santé")
+            player.health -= 50
+            player.gain_xp(50)
 
+def glittering_gardens_exploration(player):
+    print("Vous tombez sur un magnifique champ de fleurs et envisagez d'en cueillir une pour vous souvenir de ce paysage.")
+    print("Cueillez-vous la fleur ?")
+    print("1. Oui\n2. Non")
+    choice = input()
+    if choice == "1":
+        print("Un elfe en colère arrive en courant. 'Comment osez-vous toucher à mes fleurs ?!'")
+        print("Vous vous enfuyez du jardin pour éviter de créer un scandale.")
+        player.health -= 50
+        player.gain_xp(50)
+    elif choice == "2":
+        print("Autant profiter du paysage tant que vous le pouvez.")
+        print("Vous restez dans le champ de fleurs, admirant les magnifiques couleurs.")
+        print("Bientôt, le soleil commence à se coucher et la nuit tombe rapidement.")
+        print("Un elfe à proximité vous remarque. 'Bonjour, êtes-vous perdu ?'")
+        print("1. Oui\n2. Non")
+        lost_choice = input()
+        if lost_choice == "1":
+            print("'Voici une carte pour vous aider à retrouver votre chemin. Bonne chance dans vos voyages !'")
+            player.defense += 50
+            player.gain_xp(50)
+        elif lost_choice == "2":
+            print("Vous informez l'elfe que vous admiriez simplement le champ et avez perdu la notion du temps.")
+            print("L'elfe dit : 'C'est mon champ, mais cela fait longtemps que je n'ai pu partager cette vue. Prenez cette fleur et revenez bientôt.'")
+            player.health += 100
+            player.gain_xp(100)
+
+def fairy_forest_exploration(player):
+    pass
+
+def mystical_mountains_exploration(player):
+    pass
+
+def swamp_of_secrets_exploration(player):
+    pass
+
+regions = {
+    "0": "Retour au menu principal",
+    "1": "Grotte de Cristal",
+    "2": "Jardins Étincelants",
+    "3": "Forêt des Fées",
+    "4": "Montagnes Mystiques",
+    "5": "Marais des Secrets"
+}
+
+def explore_region(player):
     while True:
         print("\nCarte :")
-        for cle, valeur in regions.items():
-            print(f"{cle}. {valeur}")
-        choix = input("Sélectionnez un lieu à explorer : ")
+        for key, value in regions.items():
+            print(f"{key}. {value}")
+        location = input("Sélectionnez un endroit à explorer : ")
 
-        if choix == "0":
+        if location == "0":
             break
-        elif choix in regions:
-            print(f"Vous explorez {regions[choix]}...")
+        elif location == "1":
+            crystal_cave_exploration(player)
+        elif location == "2":
+            glittering_gardens_exploration(player)
+        elif location == "3":
+            fairy_forest_exploration(player)
+        elif location == "4":
+            mystical_mountains_exploration(player)
+        elif location == "5":
+            swamp_of_secrets_exploration(player)
         else:
             print("Choix invalide. Veuillez sélectionner une option valide.")
 
-# Programme principal
 if __name__ == "__main__":
     while True:
         print(ascii_art)
-        print("1. Créer un joueur\n2. Se connecter\n3. Quitter")
-        choix = input("Sélectionnez une option : ")
-        if choix == "1":
-            creer_joueur()
-        elif choix == "2":
-            joueur = connexion()
-            explorer_region(joueur)
-        elif choix == "3":
+        print("1. Créer un nouveau joueur\n2. Connexion\n3. Quitter\n")
+        choice = input("Sélectionnez une option : ")
+        if choice == "1":
+            create_player()
+        elif choice == "2":
+            player = login()
+            explore_region(player)
+        elif choice == "3":
             print("Au revoir !")
             break
         else:
