@@ -1,2 +1,0 @@
-Username Password CharacterType Attack Health Defense Level XP
-Papaiou jempalenwar Wizard 325 850 225 1 50
