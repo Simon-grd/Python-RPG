@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 NomUtilisateur MotDePasse TypePersonnage Attaque Santé Défense Niveau XP
 Xx_SimonBedard_xX ouististi Elfe 200 950 150 1 50
 test test Fée 100 1100 100 1 50
 gmk aberrant Gobelin 125 1050 225 1 50
+=======
+NomUtilisateur MotDePasse TypePersonnage Attaque SantÃ© DÃ©fense Niveau XP
+Xx_SimonBedard_xX proutator2000 FÃ©e 100 1150 100 1 0
+gmk kaka Gobelin 125 1000 225 1 0
+>>>>>>> e6a91a9d38ab596d8b2034473c9604e7248330a6
