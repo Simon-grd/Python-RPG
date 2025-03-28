@@ -1,5 +1,5 @@
 import os
-
+from rich import print
 
 ascii_art = r"""
    ___                   ____      __        __         _     _ 
@@ -26,6 +26,13 @@ class Player:
         self.attack = new_attack
         self.health = new_health
         self.defense = new_defense
+
+    def is_alive(self):
+        return self.health > 0
+
+    def show_healthbar(self):
+        print(
+            f"[{"❤️" * self.health}{"♡" * (self.max_hp - self.health)}] {self.hp}/{self.max_hp} hp")
 
     def level_up(self):
         self.level += 1

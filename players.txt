@@ -1,3 +1,4 @@
 NomUtilisateur MotDePasse TypePersonnage Attaque Santé Défense Niveau XP
 Xx_SimonBedard_xX ouististi Elfe 200 950 150 1 50
 test test Fée 100 1100 100 1 50
+gmk aberrant Gobelin 125 1050 225 1 50

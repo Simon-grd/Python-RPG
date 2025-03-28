@@ -1,3 +1,5 @@
+from rich import print
+
 class UI:
     @staticmethod
     def show_damage(character, damage):
@@ -21,7 +23,7 @@ class UI:
     
     @staticmethod
     def show_menu(character):
-        print(f"[cyan]Choose an action for {character.name}:[/cyan]")
+        print(f"[light blue]Choose an action for {character.name}:[/light blue]")
         print("1. Attack")
         print("2. Use Item")
         print("3. View Status")
