@@ -2,8 +2,10 @@ from rich import print
 from rich.table import Table
 from rich.panel import Panel
 from rich.columns import Columns
+from rich.console import Console
 import os
 import time
+import bcrypt
 
 ascii_art = r"""
    ___                   ____      __        __         _     _ 
@@ -23,10 +25,10 @@ class Item:
 
 # Définit la classe Joueur
 class Player:
-    def __init__(self, ign, character_type, password):
+    def __init__(self, ign, character_type, password_hash):
         self.ign = ign
         self.character_type = character_type
-        self.password = password
+        self.password_hash = password_hash
         self.attack = character_type.attack
         self.health = character_type.health
         self.max_health = character_type.health  # Fix: Use character_type.health directly
@@ -89,7 +91,6 @@ class Player:
         else:
             return "Légende"
 
-    # Modifiez la méthode level_up comme ceci
     def level_up(self):
         self.level += 1
         rank = self.get_rank()
@@ -138,7 +139,8 @@ class Player:
         with open("players.txt", "w") as file:
             for line in lines:
                 if self.ign in line:
-                    line = f"{self.ign} {self.password} {self.character_type.name} {self.attack} {self.health} {self.defense} {self.level} {self.xp}\n"
+                    # Modification de la ligne pour utiliser password_hash
+                    line = f"{self.ign} {self.password_hash.decode()} {self.character_type.name} {self.attack} {self.health} {self.defense} {self.level} {self.xp}\n"
                 file.write(line)
 
 # Définit la classe TypePersonnage
@@ -216,11 +218,11 @@ def show_leaderboard():
         # Attempt to open the file with UTF-8 encoding
         try:
             with open("players.txt", "r", encoding="utf-8") as file:
-                lines = file.readlines()[1:]  # Ignorer l'en-tête
+                lines = file.readlines() # Ignorer l'en-tête
         except UnicodeDecodeError:
             # Fallback to latin-1 encoding if UTF-8 fails
             with open("players.txt", "r", encoding="latin-1") as file:
-                lines = file.readlines()[1:]  # Ignorer l'en-tête
+                lines = file.readlines()  # Ignorer l'en-tête
             
         for line in lines:
             fields = line.strip().split()
@@ -278,6 +280,8 @@ def create_player():
         player_name = input("Entrez votre nom d'utilisateur en jeu : ")
         password = input("Entrez votre mot de passe : ")
 
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        
         user_exists = False
         if os.path.exists("players.txt"):
             with open("players.txt", "r") as file:
@@ -293,23 +297,29 @@ def create_player():
                 print("1. Fée\n2. Magicien\n3. Elfe\n4. Gobelin\n5. Valkyrie")
                 character_type_choice = input()
                 if character_type_choice == "1":
-                    player = Player(player_name, fairy, password)
+                    player = Player(player_name, fairy, password_hash)
+                    break  # Ajout du break
                 elif character_type_choice == "2":
-                    player = Player(player_name, wizard, password)
+                    player = Player(player_name, wizard, password_hash)
+                    break  # Ajout du break
                 elif character_type_choice == "3":
-                    player = Player(player_name, elf, password)
+                    player = Player(player_name, elf, password_hash)
+                    break  # Ajout du break
                 elif character_type_choice == "4":
-                    player = Player(player_name, goblin, password)
+                    player = Player(player_name, goblin, password_hash)
+                    break  # Ajout du break
                 elif character_type_choice == "5":
-                    player = Player(player_name, valkyrie, password)
-                break
-            
+                    player = Player(player_name, valkyrie, password_hash)
+                    break  # Ajout du break
+                else:
+                    print("[bold red]Choix invalide ! Veuillez sélectionner 1 à 5.[/bold red]")
+
             if not os.path.exists("players.txt"):
                 with open("players.txt", "w", encoding="utf-8") as f:
-                    f.write("NomUtilisateur MotDePasse TypePersonnage Attaque Santé Défense Niveau XP\n")
+                    f.write("NomUtilisateur HashMotDePasse TypePersonnage Attaque Santé Défense Niveau XP\n")
 
             with open("players.txt", "a", encoding="utf-8") as f:
-                f.write(f"{player.ign} {player.password} {player.character_type.name} {player.character_type.attack} {player.character_type.health} {player.character_type.defense} {player.level} {player.xp}\n")
+                f.write(f"{player.ign} {player.password_hash.decode()} {player.character_type.name} {player.character_type.attack} {player.character_type.health} {player.character_type.defense} {player.level} {player.xp}\n")
                 print("Utilisateur créé avec succès !")
                 time.sleep(3)
                 break
@@ -326,26 +336,26 @@ def login():
         user = None
 
         try:
-            # Attempt to open the file with UTF-8 encoding
             with open("players.txt", "r", encoding="utf-8") as file:
                 lines = file.readlines()
         except UnicodeDecodeError:
-            # Fallback to latin-1 encoding if UTF-8 fails
             with open("players.txt", "r", encoding="latin-1") as file:
                 lines = file.readlines()
 
         for line in lines:
             fields = line.split()
-            if len(fields) == 8:
-                stored_username, stored_password = fields[0], fields[1]
-                if username == stored_username and password == stored_password:
+            if len(fields) >= 8 and username == fields[0]:
+                # Vérification du mot de passe avec bcrypt
+                if bcrypt.checkpw(password.encode('utf-8'), fields[1].encode('utf-8')):
                     player_found = True
                     character_type = CharacterType(fields[2], int(fields[3]), int(fields[4]), int(fields[5]))
-                    user = Player(stored_username, character_type, stored_password)
+                    user = Player(fields[0], character_type, fields[1].encode('utf-8'))
+                    break
 
         if not player_found:
             print("Nom d'utilisateur ou mot de passe incorrect. Veuillez réessayer.")
         else:
+            console.clear()
             print(f"\n[bold green]Connexion réussie ![/bold green]")
             print(f"Bienvenue [bold]{user.ign}[/bold] - Rang actuel : [bold]{user.get_rank()}[/bold]")
             return user
@@ -425,7 +435,7 @@ def explore_region(player):
     while True:
         print("\n[bold cyan]Menu Principal d'Exploration[/bold cyan]")
         print(Columns([
-        Panel("[bold]1. Explorer une zone\n2. Afficher l'inventaire\n3. Retour au menu[/bold]", 
+        Panel("[bold]1. Explorer une zone\n2. Afficher l'inventaire\n3. Se déconnecter[/bold]", 
             title="Options", 
             border_style="yellow"),
         Panel(f"[bold green]Santé:[/bold green] {player.health}\n"
@@ -486,8 +496,23 @@ def explore_region(player):
         player.save_to_file()
 
 if __name__ == "__main__":
+    console = Console()
+    first_time = True
+    
     while True:
-        print(ascii_art)
+        if first_time:
+            # Fade-in animation with clearing
+            for step in range(20):
+                intensity = int(255 * (step / 19))
+                color = f"#{intensity:02X}{intensity:02X}{intensity:02X}"
+                console.clear()
+                console.print(ascii_art, style=color)
+                time.sleep(0.05)
+            first_time = False
+        else:
+            console.clear()
+            print(ascii_art)
+        
         print(Columns([
             Panel("[bold cyan]1. Créer un joueur\n2. Connexion\n3. Quitter[/bold cyan]", 
                    title="Menu Principal", border_style="yellow"),
@@ -504,6 +529,7 @@ if __name__ == "__main__":
             if player:
                 explore_region(player)
         elif choice == "3":
+            console.clear()
             print("\n[bold yellow]Au revoir ![/bold yellow]")
             break
         elif choice == "4":
