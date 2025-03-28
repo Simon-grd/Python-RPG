@@ -1,4 +1,4 @@
 NomUtilisateur MotDePasse TypePersonnage Attaque Santé Défense Niveau XP
 Xx_SimonBedard_xX proutator2000 Fée 100 1150 100 1 0
 gmk kaka Gobelin 125 1000 225 1 0
-test test F�e 100 1200 100 1 50
+test test Fée 100 1200 100 1 0
