@@ -1,5 +1,14 @@
 import os
 
+ascii_art = r"""
+   ___                   ____      __        __         _     _ 
+  / _ \ _ __   ___ _ __ |  _ \ _   \ \      / /__  _ __| | __| |
+ | | | | '_ \ / _ \ '_ \| |_) | | | \ \ /\ / / _ \| '__| |/ _` |
+ | |_| | |_) |  __/ | | |  __/| |_| |\ V  V / (_) | |  | | (_| |
+  \___/| .__/ \___|_| |_|_|    \__, | \_/\_/ \___/|_|  |_|\__,_|
+       |_|                     |___/                            
+"""
+
 # Définition de la classe Joueur
 class Joueur:
     def __init__(self, pseudo, type_personnage, mot_de_passe):
@@ -147,6 +156,7 @@ def explorer_region(joueur):
 # Programme principal
 if __name__ == "__main__":
     while True:
+        print(ascii_art)
         print("1. Créer un joueur\n2. Se connecter\n3. Quitter")
         choix = input("Sélectionnez une option : ")
         if choix == "1":
