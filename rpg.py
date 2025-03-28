@@ -19,6 +19,7 @@ class Player:
         self.password = password
         self.attack = character_type.attack
         self.health = character_type.health
+        self.max_health = character_type.health  # Fix: Use character_type.health directly
         self.defense = character_type.defense
         self.xp = 0
         self.level = 1
@@ -31,9 +32,33 @@ class Player:
     def is_alive(self):
         return self.health > 0
 
+    # Ajoutez cette méthode dans la classe Player
+    def get_rank(self):
+        if self.level <= 5:
+            return "Novice"
+        elif 6 <= self.level <= 10:
+            return "Aventurier"
+        elif 11 <= self.level <= 15:
+            return "Héros"
+        elif 16 <= self.level <= 20:
+            return "Maître"
+        else:
+            return "Légende"
+
+    # Modifiez la méthode level_up comme ceci
+    def level_up(self):
+        self.level += 1
+        rank = self.get_rank()
+        print(f"[bold green]Niveau supérieur ![/bold green] Vous êtes maintenant [bold]{rank}[/bold] (niveau {self.level})")
+        self.save_to_file()
+
+    # Modifiez la méthode show_healthbar pour inclure le rang
     def show_healthbar(self):
-        print(
-            f"[{"❤️" * self.health}{"♡" * (self.max_hp - self.health)}] {self.hp}/{self.max_hp} hp")
+        filled_hearts = self.health // 10
+        empty_hearts = (self.max_health - self.health) // 10
+        rank = self.get_rank()
+        print(f"\n[bold]Niveau {self.level} - {rank}[/bold]")
+        print(f"[{'❤️' * filled_hearts}{'♡' * empty_hearts}] {self.health}/{self.max_health} PV")
 
     def level_up(self):
         self.level += 1
@@ -124,19 +149,29 @@ def login():
         player_found = False
         user = None
 
-        with open("players.txt", "r", encoding="utf-8") as file:
-            for line in file:
-                fields = line.split()
-                if len(fields) == 8:
-                    stored_username, stored_password = fields[0], fields[1]
-                    if username == stored_username and password == stored_password:
-                        player_found = True
-                        character_type = CharacterType(fields[2], int(fields[3]), int(fields[4]), int(fields[5]))
-                        user = Player(stored_username, character_type, stored_password)
+        try:
+            # Attempt to open the file with UTF-8 encoding
+            with open("players.txt", "r", encoding="utf-8") as file:
+                lines = file.readlines()
+        except UnicodeDecodeError:
+            # Fallback to latin-1 encoding if UTF-8 fails
+            with open("players.txt", "r", encoding="latin-1") as file:
+                lines = file.readlines()
+
+        for line in lines:
+            fields = line.split()
+            if len(fields) == 8:
+                stored_username, stored_password = fields[0], fields[1]
+                if username == stored_username and password == stored_password:
+                    player_found = True
+                    character_type = CharacterType(fields[2], int(fields[3]), int(fields[4]), int(fields[5]))
+                    user = Player(stored_username, character_type, stored_password)
 
         if not player_found:
             print("Nom d'utilisateur ou mot de passe incorrect. Veuillez réessayer.")
         else:
+            print(f"\n[bold green]Connexion réussie ![/bold green]")
+            print(f"Bienvenue [bold]{user.ign}[/bold] - Rang actuel : [bold]{user.get_rank()}[/bold]")
             return user
 
 def crystal_cave_exploration(player):
@@ -148,6 +183,7 @@ def crystal_cave_exploration(player):
         print("Quel soulagement ! Le bruit n'était que des gouttes d'eau tombant du plafond... Mais quelle est cette lumière ?")
         print("Vous avez trouvé un cristal de santé chanceux ! +50 Santé")
         player.health += 50
+        player.show_healthbar()
         player.gain_xp(50)
     elif path == "2":
         print("Une chauve-souris maléfique attendait silencieusement dans l'obscurité. Préparez-vous à combattre !")
