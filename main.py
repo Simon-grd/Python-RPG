@@ -235,16 +235,101 @@ class Player:
         self.save_to_file()
             
     def save_to_file(self):
-        with open("players.txt", "r") as file:
-            lines = file.readlines()
+        with open("players.txt", "r") as f:
+            lines = f.readlines()
 
-        with open("players.txt", "w") as file:
-            for line in lines:
-                if self.ign in line:
-                    line = f"{self.ign} {self.password_hash.decode()} {self.character_type.name} " \
+        # Trouve et met à jour la ligne du joueur
+        updated = False
+        new_lines = []
+        for line in lines:
+            if line.startswith(self.ign + " "):
+                new_line = f"{self.ign} {self.password_hash.decode()} {self.character_type.name} " \
                         f"{self.attack} {self.max_health} {self.defense} " \
                         f"{self.level} {self.xp} {','.join(self.completed_regions)}\n"
-                file.write(line)
+                new_lines.append(new_line)
+                updated = True
+            else:
+                new_lines.append(line)
+        
+        # Si le joueur n'était pas dans le fichier (cas d'un changement de nom)
+        if not updated:
+            new_lines.append(f"{self.ign} {self.password_hash.decode()} {self.character_type.name} " \
+                            f"{self.attack} {self.max_health} {self.defense} " \
+                            f"{self.level} {self.xp} {','.join(self.completed_regions)}\n")
+
+        # Réécrit le fichier complet
+        with open("players.txt", "w") as f:
+            f.writelines(new_lines)
+
+    def set_username(self, new_username):
+        old_username = self.ign
+        self.ign = new_username
+        self.save_to_file()  # Sauvegarde immédiate
+        # Met à jour tous les fichiers de sauvegarde
+        with open("players.txt", "r") as f:
+            lines = f.readlines()
+        
+        with open("players.txt", "w") as f:
+            for line in lines:
+                if line.startswith(old_username + " "):
+                    line = line.replace(old_username, new_username, 1)
+                f.write(line)
+        
+        print("[green]Nom d'utilisateur modifié avec succès ![/green]")
+
+    def set_password(self, new_password):
+        """Modifie le mot de passe"""
+        self.password_hash = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+        self.save_to_file()
+        print("[bold green]Mot de passe modifié avec succès ![/bold green]")
+
+    def show_account_menu(self):
+        """Affiche le menu de gestion du compte"""
+        while True:
+            print(Columns([
+                Panel("[bold]1. Changer le nom d'utilisateur\n2. Changer le mot de passe\n3. Retour[/bold]", 
+                    title="Gestion du Compte", border_style="cyan"),
+                Panel(f"[italic]Nom actuel:[/italic] [bold]{self.ign}[/bold]\n"
+                      f"[italic]Classe:[/italic] {self.character_type.name}",
+                    border_style="yellow")
+            ]))
+            
+            choice = input("\nChoisissez une option : ")
+            
+            if choice == "1":
+                new_name = input("Nouveau nom d'utilisateur : ")
+                if new_name == self.ign:
+                    print("[yellow]C'est déjà votre nom actuel ![/yellow]")
+                    continue
+                
+                # Vérifie si le nom existe déjà
+                with open("players.txt", "r") as f:
+                    if any(line.startswith(new_name + " ") for line in f):
+                        print("[bold red]Ce nom est déjà pris ![/bold red]")
+                        continue
+                
+                self.set_username(new_name)
+                
+            elif choice == "2":
+                current_pass = input("Mot de passe actuel : ")
+                if not bcrypt.checkpw(current_pass.encode('utf-8'), self.password_hash):
+                    print("[bold red]Mot de passe incorrect ![/bold red]")
+                    continue
+                
+                new_pass = input("Nouveau mot de passe : ")
+                confirm_pass = input("Confirmez le nouveau mot de passe : ")
+                
+                if new_pass != confirm_pass:
+                    print("[bold red]Les mots de passe ne correspondent pas ![/bold red]")
+                    continue
+                
+                self.set_password(new_pass)
+                
+            elif choice == "3":
+                break
+            
+            else:
+                print("[bold red]Option invalide ![/bold red]")
 
 # Définit la classe TypePersonnage
 class CharacterType:
@@ -583,15 +668,17 @@ def explore_region(player):
     while True:
         print("\n[bold cyan]Menu Principal d'Exploration[/bold cyan]")
         print(Columns([
-        Panel("[bold]1. Explorer une zone\n2. Afficher l'inventaire\n3. Se déconnecter[/bold]", 
-            title="Options", 
-            border_style="yellow"),
-        Panel(f"[bold green]Santé:[/bold green] {player.health}\n"
-            f"[bold red]Attaque:[/bold red] {player.attack}\n"
-            f"[bold blue]Défense:[/bold blue] {player.defense}",
-            title="Stats",
-            border_style="blue")
+            Panel("[bold]1. Explorer une zone\n2. Afficher l'inventaire\n"
+                  "3. Gérer le compte\n4. Se déconnecter[/bold]", 
+                title="Options", 
+                border_style="yellow"),
+            Panel(f"[bold green]Santé:[/bold green] {player.health}\n"
+                f"[bold red]Attaque:[/bold red] {player.attack}\n"
+                f"[bold blue]Défense:[/bold blue] {player.defense}",
+                title="Stats",
+                border_style="blue")
         ]))
+
         
         main_choice = input("\nChoisissez une action : ")
         
@@ -654,6 +741,9 @@ def explore_region(player):
                     player.use_item(int(item_choice))
         
         elif main_choice == "3":
+            player.show_account_menu()
+        
+        elif main_choice == "4":
             print("\nRetour au menu principal...")
             break
         
