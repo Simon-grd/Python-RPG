@@ -13,6 +13,7 @@ import os
 import random
 import time
 import bcrypt
+import random
 
 ascii_art = r"""
    ___                   ____      __        __         _     _ 
@@ -550,6 +551,20 @@ potion_sante = Item(
     100
 )
 
+feuille_dor = Item(
+    "Feuille d'or",
+    "Une feuille permettant vla les choses",
+    "health",
+    1
+)
+
+epee_mcd_attack = Item(
+    "Épée MCD",
+    "Une épée légendaire très puissante",
+    "attack",
+    889
+)
+
 # Définit la fonction de création de joueur
 def create_player():
     while True:
@@ -609,7 +624,7 @@ def show_game_map():
     ascii_map = r"""
   _________________________________________________________
  /                                                         \
-|  [bold]1. Grotte de Cristal[/bold]                    [bold]4. Montagnes Mystiques[/bold]  |
+|  [bold]1. La Montagne de l'Enfer[/bold]                    [bold]2. Le Vaisseau Amiral[/bold]  |
 |   ___   ___   ___                      /\  /\  /\        |
 |  /   \ /   \ /   \                   /  \/  \/  \       |
 | |     Cavernes     |                /             \      |
@@ -679,65 +694,105 @@ def login():
             print(f"Bienvenue [bold]{user.ign}[/bold] - Rang actuel : [bold]{user.get_rank()}[/bold]")
             return user
 
-def crystal_cave_exploration(player):
-    scroll_text("Vous entendez un bruit inquiétant...", style="#FFA500")
-    print("Le tunnel de droite est plongé dans une obscurité totale et silencieux.")
-    print("1. Gauche\n2. Droite\n")
-    path = input("Quel chemin souhaitez-vous emprunter ? ")
-    if path == "1":
-        player.add_item(potion_sante)
-        print("Quel soulagement ! Le bruit n'était que des gouttes d'eau tombant du plafond... Mais quelle est cette lumière ?")
-        print("Vous avez trouvé un cristal de santé chanceux ! +50 Santé")
-        player.health += 50
+def la_montagne_de_lenfer(player):
+    scroll_text("Vous tombez sur une feuille d'or au sol...", style="#FFA500")
+    print("1. Vous ramassez la feuille\n2. Vous mangez la feuille \n")
+    feuille = input("Que souhaitez vous faire ? ")
+    if feuille == "1":
+        print("Trop cool une feuille !")
+        player.add_item(feuille_dor)
+        print("Vous rencontrez Gandalf 'Bonjour jeune fourbe, que faites vous ici ?' :")
+        print("1. Bonjour, je suis perdu, aide moi par pitié !\n2. Bonjour Monsieur, qui êtes vous ? Je suis à la recherche du One Piece \n")
+        rep_gand = input("Quoi répondre a Gandalf ?")
+        if rep_gand == "1":
+            print("'Tiens pomme' -1500HP")
+            player.health = player.health - 1500
+        elif rep_gand == "2":
+            print("'Je suis Gandalf, le seul habitant de cette dimension. Prends cette carte, elle t'y mènera'")
+            print("Vous arrivez devant le OnePiece et donc devant le boss de la montagne")
+            print("Le boss MODELIO se dresse sur le chemin (BOSS : NAME : Modelio 1350HP ATTACK : 500 DEFENSE : 300)")
+            print("1. Vous donnez la feuille au boss\n2. Vous attaquez le boss \n")
+            modelio = input("Pris de panique vous devez prendre une décision crutiale : ")
+            if modelio == "1":
+                print("Vous avez vaincu le cruel boss modelio !")
+                player.gain_xp(300)
+            elif modelio == "2":
+                boss_modelio = Enemy("MODELIO", 1350, 500, 300, 500)
+                start_combat(player, boss_modelio)
+    elif feuille == "2":
+        print("Miam c'est vraiment trop bon !")
+        player.gain_xp(100)
+
+def le_vaisseau_amiral(player):
+    print("Vous êtes à l'entrée du vaisseau et rencontrez l'alien ' Salut, que fais tu ici ?'")
+    print("1. Si on fait une partie d'échecs et que je gagne, tu me laisse passer ?")
+    print("2. Bonjour, je cherche le commandant du vaisseau")
+    choice = input("Quoi lui répondre ? : ")
+    if choice == "1":
+        print("'T'es pas très fort pour le goat des échecs dis donc !'")
+        print("Tu te fais ratio salement avec un mat du berger -50HP")
+        player.health = player.health - 50
         player.show_healthbar()
         player.gain_xp(50)
-    elif path == "2":
-        enemy = Enemy("Chauve-souris maléfique", 250, 35, 15, 75)
-        start_combat(player, enemy)
-        if player.is_alive():
-            player.add_item(bouclier_cristal)
-"""         print("Une chauve-souris maléfique attendait silencieusement dans l'obscurité. Préparez-vous à combattre !")
-        print("1. Lancer un sort\n2. Tirer une flèche")
-        fight = input("Nous devons vaincre la chauve-souris pour sortir d'ici vivant. Choisissez votre attaque : ")
-        if fight == "1":
-            attack_animation()
-            scroll_text("[green]Le sort est réussi. +50 Attaque[green]")
-            player.attack += 50
-            player.gain_xp(50)
-        elif fight == "2":
-            print("La flèche manque sa cible, et la chauve-souris montre ses crocs avant de s'envoler. -50 Santé")
-            player.health -= 50
-            player.gain_xp(50) """
-
-def glittering_gardens_exploration(player):
-    print("Vous tombez sur un magnifique champ de fleurs et envisagez d'en cueillir une pour vous souvenir de ce paysage.")
-    print("Cueillez-vous la fleur ?")
-    print("1. Oui\n2. Non")
-    choice = input()
-    if choice == "1":
-        print("Un elfe en colère arrive en courant. 'Comment osez-vous toucher à mes fleurs ?!'")
-        print("Vous vous enfuyez du jardin pour éviter de créer un scandale.")
-        player.health -= 50
-        player.gain_xp(50)
     elif choice == "2":
-        print("Autant profiter du paysage tant que vous le pouvez.")
-        print("Vous restez dans le champ de fleurs, admirant les magnifiques couleurs.")
-        print("Bientôt, le soleil commence à se coucher et la nuit tombe rapidement.")
-        print("Un elfe à proximité vous remarque. 'Bonjour, êtes-vous perdu ?'")
-        print("1. Oui\n2. Non")
-        lost_choice = input()
-        if lost_choice == "1":
-            print("'Voici une carte pour vous aider à retrouver votre chemin. Bonne chance dans vos voyages !'")
+        print("'Suivez moi, je vais vous y mener'")
+        print("Vous ouvrez la porte du centre de commandement")
+        print("'Que faites vous ici !?'")
+        print("1. Votre vaisseau m'appartient dès à présent !\n2. Ah non rien, je visite")
+        prise_vaisseau = input("Que souhaitez vous faire ? : ")
+        if prise_vaisseau == "1":
+            print("Votre vaisseau m'appartient dès à présent ! + 50 DEF")
             player.defense += 50
             player.gain_xp(50)
-        elif lost_choice == "2":
-            print("Vous informez l'elfe que vous admiriez simplement le champ et avez perdu la notion du temps.")
-            print("L'elfe dit : 'C'est mon champ, mais cela fait longtemps que je n'ai pu partager cette vue. Prenez cette fleur et revenez bientôt.'")
-            player.health += 100
-            player.gain_xp(100)
+            print("Le commandant du vaisseau veut vous combattre")
+            print("1. Vous décidez d'utiliser le pion d'échecs comme totem d'immortalité")
+            print("2. Vous essayez de vaincre le commandant du vaisseau")
+            commandant = input("Que souhaitez vous faire ? : ")
+            if commandant == "1":
+                print("Le boss finit par mourir car vous êtes immortel")
+                print("EZ bouffon")
+            elif commandant == "2":
+                boss_vaisseau = Enemy("Commandant du vaisseau", 500, 200, 100, 200)
+                start_combat(player, boss_vaisseau)
+        elif prise_vaisseau == "2":
+            print("Vous vous faites expulser du vaisseau par l'alien")
 
-def fairy_forest_exploration(player):
-    pass
+def le_parc_mcd(player):
+    print("Vous vous retrouvez devant un parc d'attraction à l'abandon et rencontrez l'armée de Looping :")
+    print("1. Je tente de les contourner en escaladant la structure de l'attraction devant moi.")
+    print("2. Je vais directement dans la direction de l'armée en espérant qu'ils me laissent passer.")
+    parc = input("Que souhaitez vous faire ? : ")
+    if parc == "1":
+        print("Vous êtes sur une plateforme au dessus de l'armée :")
+        print("1. Vous décidez de vous faufiler sur la plateforme jusqu'au boss Looping en espérant ne pas vous faire repérer.")
+        print("2. Vous tentez de descendre de la plateforme juste derrière les gardes.")
+        plateforme = input("Que souhaitez vous faire ? : ")
+        if plateforme == "1":
+            print("L'armée de Looping vous attaque et vous perdez car vous vous prenez pour Francis Ngannou")
+            player.health = player.health - 100
+            player.show_healthbar()
+        elif plateforme == "2":
+            print("Un garde vous repère 'Revenez !'")
+            garde = input("Voulez vous retourner vers le garde ? \n1. Oui\n2. Non")
+            if garde == "1":
+                print("Le garde vous donne son épée de fou malade")
+                player.add_item(epee_mcd_attack)
+            elif garde == "2":
+                print("Vous continuez a courrir vers le boss")
+                print("Vous vous trouvez maintenant devant le boss Looping(HP 1500  ATTACK : 750 DEFENSE : 250 )")
+                loopi = input("1. Vous utilisez l'épée MCD du garde\n2. Vous Activez votre totem d'immortalité")
+                if loopi == "1":
+                    print("Vous vous faites ratio par les clés étrangères")
+                    player.health = player.health - 100
+                    player.show_healthbar()
+                elif loopi == "2":
+                    print("Vous gagnez")
+                    print("EZ")
+                    player.gain_xp(200)
+    elif parc == "2":
+        print("L'armée de Looping vous attaque et vous perdez car vous vous prenez pour Francis Ngannou")
+        player.health = player.health - 100
+        player.show_healthbar()
 
 def mystical_mountains_exploration(player):
     pass
@@ -747,9 +802,9 @@ def swamp_of_secrets_exploration(player):
 
 regions = {
     "0": "Retour au menu principal",
-    "1": "Grotte de Cristal",
-    "2": "Jardins Étincelants",
-    "3": "Forêt des Fées",
+    "1": "La Montagne de l'Enfer",
+    "2": "Le Vaisseau Amiral",
+    "3": "Le parc MCD",
     "4": "Montagnes Mystiques",
     "5": "Marais des Secrets"
 }
@@ -787,28 +842,28 @@ def explore_region(player):
                     if '1' in player.completed_regions:
                         print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
                         continue
-                    crystal_cave_exploration(player)
+                    la_montagne_de_lenfer(player)
                     player.completed_regions.append('1')
                 elif zone_choice == "2":
                     if '2' in player.completed_regions:
                         print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
                         continue
-                    glittering_gardens_exploration(player)
+                    le_vaisseau_amiral(player)
                     player.completed_regions.append('2')
                 elif zone_choice == "3":
-                    if '3' in player.completed_regions(player):
+                    if '3' in player.completed_regions:
                         print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
                         continue
-                    fairy_forest_exploration(player)
+                    le_parc_mcd(player)
                     player.completed_regions.append('3')
                 elif zone_choice == "4":
-                    if '4' in player.completed_regions(player):
+                    if '4' in player.completed_regions:
                         print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
                         continue
                     mystical_mountains_exploration(player)
                     player.completed_regions.append('4')
                 elif zone_choice == "5":
-                    if '5' in player.completed_regions(player):
+                    if '5' in player.completed_regions:
                         print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
                         continue
                     swamp_of_secrets_exploration(player)

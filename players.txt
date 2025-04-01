@@ -1,3 +1,7 @@
 
 testing $2b$12$0TCGdqusJusEp4S3.Ng5retZ8nTx..E8sDybQNOmK3k9P1BbyEg0m Magicien 294 959 187 3 200 1
 tester $2b$12$KaSo0M2U.oZkanMj/cm5ReXOV4Hrjvg0a.XubWDynR1mloW6fR7Ii Fée 100 1150 100 1 75 1
+papa $2b$12$TsHnskTLFpI4gBFViPK.B.a6yh/TvnfsXYd11Q26mNhCcU0fq9K0i Valkyrie 250 850 250 1 0 
+oue $2b$12$zl2PrQLB2u.1r0IpZ5di5OUlecO1gWmnMotKIG1XmNBCWUIP.LrxC Magicien 275 900 175 1 50 1,2
+tete $2b$12$lCa7w13BObIZFxnqXW.gGOItaCDCpraH2OzX54u4y6YERCPHb0sve Elfe 233 1099 221 4 250 2,1
+eee $2b$12$UZStBHCkMJUvLyxZc41ti.F/WYEYGwT0aUCWnemEsk5UmxOnbQtVO Gobelin 125 1000 225 1 0 3
