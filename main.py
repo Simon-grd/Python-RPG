@@ -802,8 +802,37 @@ def le_parc_mcd(player):
 
 def la_foret_maria_db(player):
     scroll_text("Vous apparaissez dans une forêt assez sombre, avec autour de vous une clés étrangère :", style="#FFA500")
-    print("")
+    key = input("1. Vous ramassez la clé\n2. Vous laissez la clé par terre\n")
+    if key == "1":
+        print("Une super clé inutile retour lobby...")
+        player.health = player.health + 300
+    elif key == "2":
+        print("Soudain vous vous retrouvez face à une table de téléportation en plein milieu du chemin :")
+        print("1 : Vous choisissez de vous téléporter à l'entrée de la forêt")
+        print("2 : Vous choisissez de vous téléporter dans le royaume UTF8")
+        print("3 : Vous choisissez de vous téléporter en tant qu'administrateur dans le royaume UTF8")
+        tp = input("Que voulez vous faire ? : ")
+        if tp == "1":
+            print("BOUM")
+        elif tp == "2":
+            print("T mor")
+            exit()
+        elif tp == "3":
+            print("Face à vous se trouve le Boss du royaume ( BOSS : NAME : UTF8MB4 HP : 1750 ATTACK : 600 DEFENSE : 400) vous possédez plusieurs droits admin :")
+            print("1 : Vous utilisez /kill UTF8MB4")
+            print("2 : Vous utilisez /ipconfig UTF8MB4")
+            print("3 : Vous utilisez /lobby")
+            adm = input("Quelle commande allez vous éxecuter ? : ")
+            if adm == "1":
+                print("Vous avez vaincu le boss UTF8MB4 QUEL BOSS BRAVO")
+                player.gain_xp(1500)
+            elif adm == "2":
+                print("Dommage si pres du but t mor")
+                exit()
+            elif adm == "3":
+                print("T'es perdu là")
 
+                
 def swamp_of_secrets_exploration(player):
     pass
 
