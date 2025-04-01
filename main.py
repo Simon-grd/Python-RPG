@@ -131,8 +131,11 @@ class Player:
         self.health = new_health
         self.defense = new_defense
 
-    def is_alive(self):
-        return self.health > 0
+    def check_if_dead(self):
+        if self.health <= 0:
+            print("[bold red]Vous êtes mort ! Vous ne pouvez plus jouer tant que vos HP ne sont pas positifs.[/bold red]")
+            return True
+        return False
 
     def get_rank(self):
         if self.level <= 5:
@@ -325,8 +328,9 @@ class Enemy:
         self.defense = defense
         self.xp_reward = xp_reward
 
-    def is_alive(self):
-        return self.health > 0
+    def check_if_dead(self):
+        """Vérifie si l'ennemi est mort."""
+        return self.health <= 0
 
     def show_health(self):
         filled = self.health // 10
@@ -350,35 +354,33 @@ valkyrie = CharacterType("Valkyrie", 250, 850, 250)
 def start_combat(player, enemy):
     console = Console()
     console.clear()
-    parry_cooldown = 0
-    parry_active = False
-    combat_effects = {'attack': 0, 'defense': 0}
-    effect_durations = {}
+    player_parry_cooldown = 0
+    enemy_parry_cooldown = 0
+    player_parry_active = False
+    enemy_parry_active = False
 
-    while player.is_alive() and enemy.is_alive():
+    while not player.check_if_dead() and not enemy.check_if_dead():
         # Affichage des stats du joueur et de l'ennemi
-        console.print(f"\n[bold cyan]{player.ign}[/bold cyan] - Santé : {player.health}/{player.max_health} PV")
-        console.print(f"[bold red]{enemy.name}[/bold red] - Santé : {enemy.health}/{enemy.max_health} PV")
-        
-        # Affichage des effets actifs
-        if combat_effects['attack'] > 0:
-            console.print(f"[green]Bonus d'attaque : +{combat_effects['attack']} (reste {effect_durations.get('attack', 0)} tours)[/green]")
-        if combat_effects['defense'] > 0:
-            console.print(f"[blue]Bonus de défense : +{combat_effects['defense']} (reste {effect_durations.get('defense', 0)} tours)[/blue]")
+        console.print(f"\n[bold cyan]{player.ign}[/bold cyan] - Santé : {player.show_healthbar()}")
+        console.print(f"[bold red]{enemy.name}[/bold red] - Santé : {enemy.show_health()}")
 
         # Menu d'action
         print("\n[bold]Que voulez-vous faire ?[/bold]")
         print("1. Attaquer")
         print("2. Utiliser un objet")
-        print(f"3. Parer {'(disponible)' if parry_cooldown == 0 else f'(cooldown {parry_cooldown} tours)'}")
+        print(f"3. Parer {'(disponible)' if player_parry_cooldown == 0 else f'(cooldown {player_parry_cooldown} tours)'}")
         action = input("\nChoisissez une action : ")
 
         if action == "1":
             # Attaque du joueur
-            damage = max(player.attack + combat_effects.get('attack', 0) - enemy.defense, 0)
-            enemy.health -= damage
-            console.print(f"[bold green]Vous infligez {damage} dégâts à {enemy.name} ![/bold green]")
-        
+            if enemy_parry_active:
+                console.print(f"[bold cyan]{enemy.name} pare votre attaque ![/bold cyan]")
+                enemy_parry_active = False
+            else:
+                damage = max(int((player.attack * random.uniform(1.0, 1.5)) - (enemy.defense * 0.5)), 1)
+                enemy.health -= damage
+                console.print(f"[bold green]Vous infligez {damage} dégâts à {enemy.name} ![/bold green]")
+
         elif action == "2":
             # Utilisation d'un objet
             if not player.inventory:
@@ -392,44 +394,44 @@ def start_combat(player, enemy):
                 player.use_item(choice)
             except (ValueError, IndexError):
                 console.print("[red]Choix invalide ![/red]")
-        
-        elif action == "3" and parry_cooldown == 0:
+
+        elif action == "3" and player_parry_cooldown == 0:
             # Activation de la parade
-            parry_active = True
-            parry_cooldown = 3
+            player_parry_active = True
+            player_parry_cooldown = 3
             console.print("[bold cyan]Vous vous préparez à parer ![/bold cyan]")
         else:
             console.print("[red]Action invalide ou indisponible ![/red]")
 
         # Vérification si l'ennemi est mort
-        if not enemy.is_alive():
+        if enemy.check_if_dead():
             break
 
         # Tour de l'ennemi
-        if parry_active:
-            damage = max(player.attack - enemy.defense, 0)
-            enemy.health -= damage
-            console.print(f"[bold cyan]Vous contre-attaquez et infligez {damage} dégâts à {enemy.name} ![/bold cyan]")
-            parry_active = False
+        if random.random() < 0.3 and enemy_parry_cooldown == 0:  # 30% de chance de parer
+            enemy_parry_active = True
+            enemy_parry_cooldown = 3
+            console.print(f"[bold red]{enemy.name} se prépare à parer ![/bold red]")
         else:
-            damage = max(enemy.attack - (player.defense + combat_effects.get('defense', 0)), 0)
-            player.health -= damage
-            console.print(f"[bold red]{enemy.name} vous inflige {damage} dégâts ![/bold red]")
+            if player_parry_active:
+                damage = max(int((enemy.attack * random.uniform(1.0, 1.5)) - (player.defense * 0.5)), 1)
+                player.health -= damage
+                console.print(f"[bold cyan]Vous contre-attaquez et infligez {damage} dégâts à {enemy.name} ![/bold cyan]")
+                player_parry_active = False
+            else:
+                damage = max(int((enemy.attack * random.uniform(1.0, 1.5)) - (player.defense * 0.5)), 1)
+                player.health -= damage
+                console.print(f"[bold red]{enemy.name} vous inflige {damage} dégâts ![/bold red]")
 
-        # Gestion des effets actifs
-        for effect in list(effect_durations.keys()):
-            effect_durations[effect] -= 1
-            if effect_durations[effect] <= 0:
-                combat_effects[effect] = 0
-                del effect_durations[effect]
-
-        # Réduction du cooldown de parade
-        if parry_cooldown > 0:
-            parry_cooldown -= 1
+        # Réduction des cooldowns de parade
+        if player_parry_cooldown > 0:
+            player_parry_cooldown -= 1
+        if enemy_parry_cooldown > 0:
+            enemy_parry_cooldown -= 1
 
     # Résultat du combat
     console.clear()
-    if player.is_alive():
+    if not player.check_if_dead():
         console.print(f"[bold green]Victoire ! Vous avez vaincu {enemy.name} et gagné {enemy.xp_reward} XP ![/bold green]")
         player.gain_xp(enemy.xp_reward)
     else:
@@ -492,29 +494,29 @@ def show_leaderboard():
     players = []
     
     try:
-        # Attempt to open the file with UTF-8 encoding
+        # Lecture du fichier avec gestion des encodages
         try:
             with open("players.txt", "r", encoding="utf-8") as file:
-                lines = file.readlines() # Ignorer l'en-tête
+                lines = file.readlines()
         except UnicodeDecodeError:
-            # Fallback to latin-1 encoding if UTF-8 fails
             with open("players.txt", "r", encoding="latin-1") as file:
-                lines = file.readlines()  # Ignorer l'en-tête
-            
+                lines = file.readlines()
+        
+        # Parcours des lignes pour extraire les données des joueurs
         for line in lines:
             fields = line.strip().split()
-            if len(fields) == 8:
+            if len(fields) >= 8:  # Vérifie que la ligne contient suffisamment de données
                 players.append({
                     "username": fields[0],
                     "class": fields[2],
                     "level": int(fields[6]),
                     "xp": int(fields[7])
                 })
-                    
-        # Trie par niveau puis XP
+        
+        # Trie par niveau (descendant) puis par XP (descendant)
         players.sort(key=lambda x: (-x["level"], -x["xp"]))
         
-        # Création du tableau
+        # Création du tableau pour afficher les joueurs
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Position", style="cyan")
         table.add_column("Pseudo", style="green")
@@ -522,6 +524,7 @@ def show_leaderboard():
         table.add_column("Niveau", justify="right")
         table.add_column("XP", justify="right")
         
+        # Ajout des joueurs au tableau (limité aux 10 premiers)
         for idx, player in enumerate(players[:10], 1):
             table.add_row(
                 f"{idx}ère" if idx == 1 else f"{idx}ème",
@@ -530,9 +533,10 @@ def show_leaderboard():
                 str(player["level"]),
                 f"{player['xp']:,}"
             )
-            
-        print(Panel(table, title="[bold yellow]Classement des Joueurs[/bold yellow]"))
         
+        # Affichage du tableau dans un panneau
+        print(Panel(table, title="[bold yellow]Classement des Joueurs[/bold yellow]"))
+    
     except FileNotFoundError:
         print("[red]Aucun joueur enregistré ![/red]")
 
@@ -706,7 +710,9 @@ def la_montagne_de_lenfer(player):
         rep_gand = input("Quoi répondre a Gandalf ?")
         if rep_gand == "1":
             print("'Tiens pomme' -1500HP")
-            player.health = player.health - 1500
+            player.health -= 1500
+            if player.check_if_dead():
+                return 
         elif rep_gand == "2":
             print("'Je suis Gandalf, le seul habitant de cette dimension. Prends cette carte, elle t'y mènera'")
             print("Vous arrivez devant le OnePiece et donc devant le boss de la montagne")
@@ -717,7 +723,7 @@ def la_montagne_de_lenfer(player):
                 print("Vous avez vaincu le cruel boss modelio !")
                 player.gain_xp(300)
             elif modelio == "2":
-                boss_modelio = Enemy("MODELIO", 1350, 500, 300, 500)
+                boss_modelio = Enemy("MODELIO", 1350, 300, 150, 500)
                 start_combat(player, boss_modelio)
     elif feuille == "2":
         print("Miam c'est vraiment trop bon !")
@@ -738,7 +744,7 @@ def le_vaisseau_amiral(player):
         print("'Suivez moi, je vais vous y mener'")
         print("Vous ouvrez la porte du centre de commandement")
         print("'Que faites vous ici !?'")
-        print("1. Votre vaisseau m'appartient dès à présent !\n2. Ah non rien, je visite")
+        print("1. Votre vaisseau m'appartient dès à présent !\n2. Ah non rien, je visite\n")
         prise_vaisseau = input("Que souhaitez vous faire ? : ")
         if prise_vaisseau == "1":
             print("Votre vaisseau m'appartient dès à présent ! + 50 DEF")
@@ -758,7 +764,7 @@ def le_vaisseau_amiral(player):
             print("Vous vous faites expulser du vaisseau par l'alien")
 
 def le_parc_mcd(player):
-    print("Vous vous retrouvez devant un parc d'attraction à l'abandon et rencontrez l'armée de Looping :")
+    scroll_text("Vous vous retrouvez devant un parc d'attraction à l'abandon et rencontrez l'armée de Looping :", style="#FFA500")
     print("1. Je tente de les contourner en escaladant la structure de l'attraction devant moi.")
     print("2. Je vais directement dans la direction de l'armée en espérant qu'ils me laissent passer.")
     parc = input("Que souhaitez vous faire ? : ")
@@ -794,8 +800,9 @@ def le_parc_mcd(player):
         player.health = player.health - 100
         player.show_healthbar()
 
-def mystical_mountains_exploration(player):
-    pass
+def la_foret_maria_db(player):
+    scroll_text("Vous apparaissez dans une forêt assez sombre, avec autour de vous une clés étrangère :", style="#FFA500")
+    print("")
 
 def swamp_of_secrets_exploration(player):
     pass
@@ -805,13 +812,16 @@ regions = {
     "1": "La Montagne de l'Enfer",
     "2": "Le Vaisseau Amiral",
     "3": "Le parc MCD",
-    "4": "Montagnes Mystiques",
+    "4": "La forêt MariaDB",
     "5": "Marais des Secrets"
 }
 
 def explore_region(player):
     screen_transition(style="purple")
     while True:
+        if player.check_if_dead():
+            print("[bold red]Vous devez restaurer vos HP avant de continuer.[/bold red]")
+            break
         print("\n[bold cyan]Menu Principal d'Exploration[/bold cyan]")
         print(Columns([
             Panel("[bold]1. Explorer une zone\n2. Afficher l'inventaire\n"
@@ -829,6 +839,9 @@ def explore_region(player):
         main_choice = input("\nChoisissez une action : ")
         
         if main_choice == "1":
+            if player.check_if_dead():
+                print("[bold red]Vous êtes mort ! Vous ne pouvez pas explorer une région tant que vos HP ne sont pas positifs.[/bold red]")
+                continue
             while True:
                 print("\n[bold]Carte des Zones d'Exploration[/bold]")
                 for key, value in regions.items():
