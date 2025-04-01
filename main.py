@@ -1001,7 +1001,7 @@ def explore_region(player):
                         print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
                         continue
                     le_chateau_de_wamp(player)
-                    """ player.completed_regions.append('5') """
+                    player.completed_regions.append('5')
                 else:
                     print("[bold red]Choix invalide ![/bold red]")
                 
