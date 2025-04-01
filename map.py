@@ -43,10 +43,7 @@ class GameMap:
 |  \  Ancestraux/          \_______________/               |
  \_________________________________________________________/
         """
-        print(Panel.fit(f"[cyan]{ascii_map}[/cyan]", 
-              title="[bold gold1]Carte du Royaume d'Eldoria[/bold gold1]", 
-              border_style="green",
-              padding=(1, 2)))
+        self.console.print(Panel.fit(f"[cyan]{ascii_map}[/cyan]", title="[bold gold1]Carte du Royaume d'Eldoria[/bold gold1]", border_style="green", padding=(1, 2)))
         input("\nAppuyez sur Entrée pour retourner au menu...")
 
     # ----------------- La Montagne de l'Enfer -----------------
