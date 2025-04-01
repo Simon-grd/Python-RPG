@@ -541,11 +541,18 @@ def show_leaderboard():
         print("[red]Aucun joueur enregistré ![/red]")
 
 
-bouclier_cristal = Item(
-    "Bouclier de Cristal", 
-    "Un bouclier translucide qui brille faiblement", 
-    "defense", 
-    50
+potion_invisibilite = Item(
+    "Potion d'invisibilité",
+    "Une potion qui vous rend invisible",
+    "defense",
+    1
+)
+
+potion_invincibilite = Item(
+    "Potion d'invincibilité",
+    "Une potion qui vous rend invincible",
+    "defense",
+    999
 )
 
 potion_sante = Item(
@@ -567,6 +574,13 @@ epee_mcd_attack = Item(
     "Une épée légendaire très puissante",
     "attack",
     889
+)
+
+wamp_cave_plan = Item(
+    "Plan de la Wamp Cave", 
+    "Cette carte vous permettra de vous repérer dans le château de Wamp", 
+    "health",
+    1
 )
 
 # Définit la fonction de création de joueur
@@ -825,7 +839,7 @@ def la_foret_maria_db(player):
             adm = input("Quelle commande allez vous éxecuter ? : ")
             if adm == "1":
                 print("Vous avez vaincu le boss UTF8MB4 QUEL BOSS BRAVO")
-                player.gain_xp(1500)
+                player.gain_xp(500)
             elif adm == "2":
                 print("Dommage si pres du but t mor")
                 exit()
@@ -833,8 +847,86 @@ def la_foret_maria_db(player):
                 print("T'es perdu là")
 
                 
-def swamp_of_secrets_exploration(player):
-    pass
+def le_chateau_de_wamp(player):
+    scroll_text("Vous apparaissez face à un Enderman'brrrrr hrrr'")
+    print("1. Vous vous imposez face à l'Enderman ")
+    print("2. Vous passez devant lui sans le regarder")
+    chateau = input("Que souhaitez vous faire? : ")
+    if chateau == "1":
+        print("L'Enderman vous téléporte dans le vide")
+        player.health = player.health - 100
+        player.show_healthbar()
+    elif chateau == "2":
+        print("Vous accédez au château de Wamp")
+        print("Arrivé à l'intérieur, plusieurs choix s'offrent à vous :")
+        print("1. Vous empruntez le grand escalier face à vous")
+        print("2. Vous apercevez une bibliothèque suspecte à votre gauche et décidez de passer derrière elle.")
+        print("3.  Une tenue de garde Wamp est vêtue sur un mannequin à l'entrée et vous décidez de vous habiller avec.")
+        into_chateau = input("Que souhaitez vous faire ? :")
+        if into_chateau == "1":
+            print("L'escalier ne mène à rien et vous retournez à l'entrée")
+        elif into_chateau == "2":
+            print("vous mourrez en vous faisant écraser par la bibliothèque")
+            player.health = player.health - 100 
+            player.show_healthbar()
+        elif into_chateau == "3":
+            print("Vous continuez à parcourir les couloirs du château")
+            print("Un garde Wamp vient vous aborder 'Qui es-tu ? Je ne t'ai jamais vu ici.'")
+            print("1. 'Salut, je suis nouveau. Saurais-tu où se trouve le Wamp'")
+            print("2. 'Je fais partie des nouvelles recrues de Wamp. Sais-tu où se trouve le grand mâge du château ?'")
+            garde_wamp = input("Que souhaitez vous faire? : ")
+            if garde_wamp == "1":
+                print("'Nous n'avons pas le droit de rencontrer Mr Wamp, retournez faire votre garde !'")
+            elif garde_wamp == "2" :
+                print("'Oui bien sûr, suis moi !'")
+                print("Vous accédez à la chambre du Mâge")
+                print("Le Mâge 'De quoi as-tu besoin ?'")
+                print("1. 'Donne moi une potion d'invisibilité'")
+                print("2. 'Donne moi une potion d'invincibilité'")
+                mage = input("Que souhaitez vous faire ?")
+                if mage == "1":
+                    print("Vous possédez maintenant une potion d'invisibilité")
+                    player.add_item(potion_invisibilite)
+                elif mage == "2":
+                    print("Vous possédez maintenant une potion d'invincibilité")
+                    player.add_item(potion_invincibilite)
+                    print("Le Mâge 'Avez-vous besoin d'autre chose ?")
+                    print("1. 'Il me faudrait le code d'accès à la Wamp Cave'")
+                    print("2. 'Où se trouve la Wamp Cave ?'")
+                    mage2 = input("Que souhaitez vous faire ?")
+                    if mage2 == "1":
+                        print("'Je n'ai pas le droit, retourne faire ta garde'")
+                    elif mage2 == "2":
+                        print("'Prends ce plan, il t'y mènera'")
+                        player.add_item(wamp_cave_plan)
+                        print("Après avoir suivi les indications du plan, vous vous retrouvez devant la porte de la Wamp Cave")
+                        print("1. Vous frappez à la porte")
+                        print("2. Vous ingurgitez la potion que vous a donné le grand mâge précédemment")
+                        wamp_cave = input("Que souhaitez vous faire ?")
+                        if wamp_cave == "1":
+                            print("Vous mourrez d'électrocution en touchant la porte")
+                            player.health = player.health - 100
+                            player.show_healthbar()
+                        elif wamp_cave == "2":
+                            print("Vous utilisez la potion que vous a donné le grand mâge")
+                            print("Vous apercevez une évacuation d'air provenant de la Wamp Cave")
+                            print("1. Vous décidez d'enlever la grille et d'accéder au conduit de ventilation")
+                            print("2. Vous cherchez un autre endroit afin d'accéder à la Wamp Cave")
+                            wamp_cave2 = input("Que souhaitez vous faire? : ")
+                            if wamp_cave2 == "1":
+                                print("Vous voilà dans le plafond de la Wamp Cave")
+                            elif wamp_cave2 == "2":
+                                print("Vous finissez par vous faire repérer par Wamp dans un endroit interdit et vous a renvoyé à l'entrée du château")
+                                print("Vous voulez attaquer Wamp, mais vous ne savez pas comment vous y prendre")
+                                print("1. Vous essayez de vaincre Wamp discrètement en lui infligeant un coup par derrière")
+                                print("2. Vous proposez directement un combat à Wamp")
+                                wamp_combat = input("Que souhaitez vous faire :")
+                                if wamp_combat == "1":
+                                    print("Vous avez perdu votre chance de vaincre Wamp")
+                                elif wamp_combat == "2":
+                                    print("Vous attaquez Wamp")
+                                    wamp_combat = Enemy("Wamp", 1000, 150, 75, 300)
+                                    start_combat(player, wamp_combat)
 
 regions = {
     "0": "Retour au menu principal",
@@ -842,7 +934,7 @@ regions = {
     "2": "Le Vaisseau Amiral",
     "3": "Le parc MCD",
     "4": "La forêt MariaDB",
-    "5": "Marais des Secrets"
+    "5": "Le Chateau de WAMP"
 }
 
 def explore_region(player):
@@ -902,14 +994,14 @@ def explore_region(player):
                     if '4' in player.completed_regions:
                         print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
                         continue
-                    mystical_mountains_exploration(player)
+                    la_foret_maria_db(player)
                     player.completed_regions.append('4')
                 elif zone_choice == "5":
                     if '5' in player.completed_regions:
                         print("[bold red]Vous avez déjà exploré cette région ![/bold red]")
                         continue
-                    swamp_of_secrets_exploration(player)
-                    player.completed_regions.append('5')
+                    le_chateau_de_wamp(player)
+                    """ player.completed_regions.append('5') """
                 else:
                     print("[bold red]Choix invalide ![/bold red]")
                 
