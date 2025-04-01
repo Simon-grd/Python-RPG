@@ -1,1 +1,3 @@
-proutx $2b$12$NZcL5ALgpQkJwTF288dgau1Nsk06C5fK8aF5.WBDY38AwMTISgrGi Fée 108 1177 105 2 100 1
+
+testing $2b$12$0TCGdqusJusEp4S3.Ng5retZ8nTx..E8sDybQNOmK3k9P1BbyEg0m Magicien 294 959 187 3 200 1
+tester $2b$12$KaSo0M2U.oZkanMj/cm5ReXOV4Hrjvg0a.XubWDynR1mloW6fR7Ii Fée 100 1150 100 1 75 1

@@ -7,7 +7,6 @@ from rich.box import Box
 from rich.box import ROUNDED 
 from rich.live import Live
 from rich.progress import Progress, BarColumn
-from rich.spinner import Spinner
 from rich.text import Text
 import itertools
 import os
@@ -24,12 +23,14 @@ ascii_art = r"""
        |_|                     |___/                            
 """
 
-def attack_animation():
+def attack_animation(live=None):
     frames = ["⚔️", "🔥", "💥", "✨"]
-    with Live(refresh_per_second=10) as live:
-        for frame in frames:
+    for frame in frames:
+        if live:
             live.update(Text(frame, style="bold red"))
-            time.sleep(0.3)
+        else:
+            print(frame)  # Fallback if no live instance is provided
+        time.sleep(0.3)
 
 
 def show_animated_ascii():
@@ -54,18 +55,6 @@ def animate_xp_gain(start, end, required):
             progress.update(task, advance=1, description=f"{xp}/{required} XP")
             time.sleep(0.02)
 
-def animate_health_change(current, target, max_health, duration=0.5):
-    console = Console()
-    steps = abs(target - current)
-    step_delay = duration / steps if steps != 0 else 0
-    
-    for health in range(current, target, 1 if target > current else -1):
-        filled = health // 10
-        empty = (max_health - health) // 10
-        console.print(f"[{'❤️' * filled}{'♡' * empty}] {health}/{max_health} PV")
-        time.sleep(step_delay)
-        console.move_up()
-
 def scroll_text(text, style="white", delay=0.03):
     console = Console()
     for char in str(text):
@@ -80,18 +69,11 @@ def screen_transition(style="cyan", length=30):
         time.sleep(0.03)
     console.clear()
 
-def custom_spinner(text):
-    spinner_frames = ["🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘"]
-    with Live() as live:
-        for frame in itertools.cycle(spinner_frames):
-            live.update(Text(f"{frame} {text}"))
-            time.sleep(0.1)
-
 class Item:
     def __init__(self, name, description, effect_type, value):
         self.name = name
         self.description = description
-        self.effect_type = effect_type  # 'attack', 'defense', 'health'
+        self.effect_type = effect_type
         self.value = value
 
 # Définit la classe Joueur
@@ -151,7 +133,6 @@ class Player:
     def is_alive(self):
         return self.health > 0
 
-    # Ajoutez cette méthode dans la classe Player
     def get_rank(self):
         if self.level <= 5:
             return "Novice"
@@ -193,14 +174,10 @@ class Player:
         
         self.save_to_file()
 
-    def show_healthbar(self, previous_health=None):
-        if previous_health is not None:
-            animate_health_change(previous_health, self.health, self.max_health)
-        
-        filled_hearts = self.health // 10
-        empty_hearts = (self.max_health - self.health) // 10
-        print(f"\n[bold]Niveau {self.level} - {self.get_rank()}[/bold]")
-        print(f"[{'❤️' * filled_hearts}{'♡' * empty_hearts}] {self.health}/{self.max_health} PV")
+    def show_healthbar(self):
+        filled = self.health // 10
+        empty = (self.max_health - self.health) // 10
+        return f"[{'❤️' * filled}{'♡' * empty}] {self.health}/{self.max_health} PV"
 
     def show_xp_bar(self):
         required_xp = self.calculate_level()
@@ -338,7 +315,23 @@ class Player:
             else:
                 print("[bold red]Option invalide ![/bold red]")
 
-# Définit la classe TypePersonnage
+class Enemy:
+    def __init__(self, name, health, attack, defense, xp_reward):
+        self.name = name
+        self.health = health
+        self.max_health = health
+        self.attack = attack
+        self.defense = defense
+        self.xp_reward = xp_reward
+
+    def is_alive(self):
+        return self.health > 0
+
+    def show_health(self):
+        filled = self.health // 10
+        empty = (self.max_health - self.health) // 10
+        return f"[{'❤️' * filled}{'♡' * empty}] {self.health}/{self.max_health} PV"
+
 class CharacterType:
     def __init__(self, name, attack, health, defense):
         self.name = name
@@ -352,6 +345,94 @@ wizard = CharacterType("Magicien", 275, 900, 175)
 elf = CharacterType("Elfe", 200, 1000, 150)
 goblin = CharacterType("Gobelin", 125, 1000, 225)
 valkyrie = CharacterType("Valkyrie", 250, 850, 250)
+
+def start_combat(player, enemy):
+    console = Console()
+    console.clear()
+    parry_cooldown = 0
+    parry_active = False
+    combat_effects = {'attack': 0, 'defense': 0}
+    effect_durations = {}
+
+    while player.is_alive() and enemy.is_alive():
+        # Affichage des stats du joueur et de l'ennemi
+        console.print(f"\n[bold cyan]{player.ign}[/bold cyan] - Santé : {player.health}/{player.max_health} PV")
+        console.print(f"[bold red]{enemy.name}[/bold red] - Santé : {enemy.health}/{enemy.max_health} PV")
+        
+        # Affichage des effets actifs
+        if combat_effects['attack'] > 0:
+            console.print(f"[green]Bonus d'attaque : +{combat_effects['attack']} (reste {effect_durations.get('attack', 0)} tours)[/green]")
+        if combat_effects['defense'] > 0:
+            console.print(f"[blue]Bonus de défense : +{combat_effects['defense']} (reste {effect_durations.get('defense', 0)} tours)[/blue]")
+
+        # Menu d'action
+        print("\n[bold]Que voulez-vous faire ?[/bold]")
+        print("1. Attaquer")
+        print("2. Utiliser un objet")
+        print(f"3. Parer {'(disponible)' if parry_cooldown == 0 else f'(cooldown {parry_cooldown} tours)'}")
+        action = input("\nChoisissez une action : ")
+
+        if action == "1":
+            # Attaque du joueur
+            damage = max(player.attack + combat_effects.get('attack', 0) - enemy.defense, 0)
+            enemy.health -= damage
+            console.print(f"[bold green]Vous infligez {damage} dégâts à {enemy.name} ![/bold green]")
+        
+        elif action == "2":
+            # Utilisation d'un objet
+            if not player.inventory:
+                console.print("[red]Votre inventaire est vide ![/red]")
+                continue
+            player.show_inventory()
+            try:
+                choice = int(input("Entrez le numéro de l'objet à utiliser (0 pour annuler) : "))
+                if choice == 0:
+                    continue
+                player.use_item(choice)
+            except (ValueError, IndexError):
+                console.print("[red]Choix invalide ![/red]")
+        
+        elif action == "3" and parry_cooldown == 0:
+            # Activation de la parade
+            parry_active = True
+            parry_cooldown = 3
+            console.print("[bold cyan]Vous vous préparez à parer ![/bold cyan]")
+        else:
+            console.print("[red]Action invalide ou indisponible ![/red]")
+
+        # Vérification si l'ennemi est mort
+        if not enemy.is_alive():
+            break
+
+        # Tour de l'ennemi
+        if parry_active:
+            damage = max(player.attack - enemy.defense, 0)
+            enemy.health -= damage
+            console.print(f"[bold cyan]Vous contre-attaquez et infligez {damage} dégâts à {enemy.name} ![/bold cyan]")
+            parry_active = False
+        else:
+            damage = max(enemy.attack - (player.defense + combat_effects.get('defense', 0)), 0)
+            player.health -= damage
+            console.print(f"[bold red]{enemy.name} vous inflige {damage} dégâts ![/bold red]")
+
+        # Gestion des effets actifs
+        for effect in list(effect_durations.keys()):
+            effect_durations[effect] -= 1
+            if effect_durations[effect] <= 0:
+                combat_effects[effect] = 0
+                del effect_durations[effect]
+
+        # Réduction du cooldown de parade
+        if parry_cooldown > 0:
+            parry_cooldown -= 1
+
+    # Résultat du combat
+    console.clear()
+    if player.is_alive():
+        console.print(f"[bold green]Victoire ! Vous avez vaincu {enemy.name} et gagné {enemy.xp_reward} XP ![/bold green]")
+        player.gain_xp(enemy.xp_reward)
+    else:
+        console.print(f"[bold red]Défaite... {enemy.name} vous a vaincu.[/bold red]")
 
 def display_player_stats(player_data):
     """Affiche les statistiques d'un joueur de manière élégante"""
@@ -611,8 +692,11 @@ def crystal_cave_exploration(player):
         player.show_healthbar()
         player.gain_xp(50)
     elif path == "2":
-        player.add_item(bouclier_cristal)
-        print("Une chauve-souris maléfique attendait silencieusement dans l'obscurité. Préparez-vous à combattre !")
+        enemy = Enemy("Chauve-souris maléfique", 250, 35, 15, 75)
+        start_combat(player, enemy)
+        if player.is_alive():
+            player.add_item(bouclier_cristal)
+"""         print("Une chauve-souris maléfique attendait silencieusement dans l'obscurité. Préparez-vous à combattre !")
         print("1. Lancer un sort\n2. Tirer une flèche")
         fight = input("Nous devons vaincre la chauve-souris pour sortir d'ici vivant. Choisissez votre attaque : ")
         if fight == "1":
@@ -623,7 +707,7 @@ def crystal_cave_exploration(player):
         elif fight == "2":
             print("La flèche manque sa cible, et la chauve-souris montre ses crocs avant de s'envoler. -50 Santé")
             player.health -= 50
-            player.gain_xp(50)
+            player.gain_xp(50) """
 
 def glittering_gardens_exploration(player):
     print("Vous tombez sur un magnifique champ de fleurs et envisagez d'en cueillir une pour vous souvenir de ce paysage.")
