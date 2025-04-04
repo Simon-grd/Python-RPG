@@ -31,12 +31,12 @@ class GameMap:
 |  \___/ \___/ \___/                  \/\        /\/      |
 |      |                  ______________  \      /         |
 |      |                 /              \ \    /           |
-| [bold]2. Jardins Étincelants[/bold]  | [bold]5. Marais des Secrets[/bold] | |
+| [bold]3. Le parc MCD[/bold]  | [bold]4. La forêt MariaDB[/bold] | |
 |   o  o  o  o  o      |  ~~  ~~  ~~  ~~ |    | ~~  ~~    |
 |  < Fleurs Magiques >  |  Marécages     |    |           |
 |   o  o  o  o  o       \_______________/     |  Serpents |
 |      |                          |            \_/  \_/    |
-| [bold]3. Forêt des Fées[/bold]       /   \                      |
+| [bold]5. Le Chateau de WAMP[/bold]       /   \                      |
 |   /\  /\  /\              ____/     \____                |
 |  /  \/  \/  \           /               \               |
 | |  Arbres     |         |  [bold]Campement[/bold]   |              |

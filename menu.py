@@ -8,6 +8,8 @@ from rich.panel import Panel
 from rich.table import Table
 from player import Player
 from character import fairy, wizard, elf, goblin, valkyrie
+from character import CharacterType
+from animation import screen_transition
 
 def create_player():
     while True:
@@ -114,6 +116,7 @@ def search_player_stats():
                 lines = file.readlines()
         for line in lines:
             if line.startswith(username + " "):
+                default_character_type = CharacterType("Default", attack=10, defense=5, health=100)
                 fields = line.strip().split()
                 player_data = {
                     "NomUtilisateur": fields[0],
@@ -123,7 +126,7 @@ def search_player_stats():
                     "Défense": int(fields[5]),
                     "Niveau": int(fields[6]),
                     "XP": int(fields[7]),
-                    "Rang": Player(fields[0], None, "").get_rank()  # Simplifié pour l'affichage
+                    "Rang": Player(fields[0], default_character_type, "").get_rank()  
                 }
                 from ui import display_player_stats
                 display_player_stats(player_data)
